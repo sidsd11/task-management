@@ -6,7 +6,9 @@ const userSchema = new mongoose.Schema({
     password: {type: String, required: true},
     isAccountVerified: {type: Boolean, default: false},
     verifyAccountOtp: {type: String, default: ''},
-    verifyAccountOtpExpiresAt: {type: Number, default: 0}
+    verifyAccountOtpExpiresAt: {type: Number, default: 0},
+    resetPasswordOtp: {type: String, default: ''},
+    resetPasswordOtpExpiresAt: {type: Number, default: 0},
 }, {timestamps: true})
 
 const userModel = mongoose.models.user || mongoose.model('user', userSchema)
