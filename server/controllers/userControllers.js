@@ -160,68 +160,6 @@ export const verifyAccount = async (req, res) => {
     }
 }
 
-export const sendResetPasswordOtp = async (req, res) => {
-    try {
-        const {email} = req.body
-
-        const user = await userModel.findOne(email)
-        if (!user) {
-            return res.json({success: false, message: 'User does not exist'})
-        }
-
-        const otp = String(Math.floor(100000 + Math.random() * 900000))
-        user.resetPasswordOtp = otp
-        user.resetPasswordOtpExpiresAt = Date.now() + (5 * 60 * 1000)
-        await user.save()
-
-        const mailOptions = {
-            from: process.env.SENDER_EMAIL,
-            to: user.email,
-            subject: 'OTP to reset your password',
-            text: `OTP to reset your password is ${otp}. It will expire in 5 minutes`
-        }
-        await transporter.sendMail(mailOptions)
-
-        return res.json({success: true, message: 'An OTP to reset your password has been sent successfully.'})
-    }
-    catch (error) {
-        return res.json({success: false, message: error.message})
-    }
-}
-
-export const resetPassword = async (req, res) => {
-    const {email, otp, password} = req.body
-    if (!email || !otp || !password) {
-        return res.json({success: false, message: 'Missing details'})
-    }
-
-    try {
-        const user = await userModel.findOne({email})
-        if (!user) {
-            return res.json({success: false, message: 'User does not exist'})
-        }
-        
-        if (user.resetPasswordOtp !== otp || user.resetPasswordOtp === '') {
-            return res.json({success: false, message: 'Invalid OTP'})
-        }
-
-        if (user.resetPasswordOtpExpiresAt < Date.now()) {
-            return res.json({success: false, message: 'Your OTP has expired'})
-        }
-
-        const newPassword = await bcrypt.hash(password, 10)
-        user.password = newPassword
-        user.resetPasswordOtp = ''
-        user.resetPasswordOtpExpiresAt = 0
-        await user.save()
-
-        return res.json({success: true, message: 'Password changed successfully'})
-    }
-    catch (error) {
-        return res.json({success: false, message: error.message})
-    }
-}
-
 export const getUserData = async (req, res) => {
     try {
         const userId = req.user.id
