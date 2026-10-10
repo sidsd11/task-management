@@ -1,10 +1,10 @@
-import React, { useContext, useEffect, useState } from 'react'
+import { useContext, useEffect, useState } from 'react'
 import Navbar from '../components/Navbar.jsx'
 import { useNavigate } from 'react-router-dom'
 import { AppContext } from '../context/AppContext.jsx'
 import axios from 'axios'
 import { toast } from 'react-toastify'
-import { Loader, Pen, ChevronDown, ChevronUp, Trash2, CirclePlus } from 'lucide-react'
+import { Loader, Pen, ChevronDown, ChevronUp, Trash2, CirclePlus, Search, ChevronRight, ChevronLeft } from 'lucide-react'
 
 const MyTasks = () => {
     axios.defaults.withCredentials = true
@@ -29,8 +29,24 @@ const MyTasks = () => {
     const [createNewTask, setCreateNewTask] = useState(false)  /* To check whether to show create new task window or not */
     const [createNewTaskTitle, setCreateNewTaskTitle] = useState('')  /* To store title of new task */
     const [createNewTaskDescription, setCreateNewTaskDescription] = useState('')  /* To store description of new task */
-    
-     /* To get data of all tasks */
+
+    const [filteredTasks, setFilteredTasks] = useState([])
+    const [filteredTasksBeforeSearching, setFilteredTasksBeforeSearching] = useState([])
+
+    const [searchText, setSearchText] = useState('')
+
+    const [currentPage, setCurrentPage] = useState(1)
+    const [tasksPerPage, setTasksPerPage] = useState(4)
+    const indexOfLastTask = currentPage * tasksPerPage
+    const indexOfFirstTask = indexOfLastTask - tasksPerPage
+
+    const currentTasks = filteredTasks.slice(indexOfFirstTask, indexOfLastTask)
+    const totalPages = Math.ceil(filteredTasks.length / tasksPerPage)
+
+    const handlePageChange = (pageNumber) => {
+        setCurrentPage(pageNumber)
+    }
+
     const getTasks = async () => {
         try {
             const {data} = await axios.get(`${backendUrl}/api/task/get-all-tasks/${userData.id}`)
@@ -193,6 +209,35 @@ const MyTasks = () => {
         getUserData()
     }, [authLoading, isLoggedIn])
 
+    useEffect(() => {
+        let filtered = selectedFilter === 'All' ? tasks : tasks.filter(task => task.status === selectedFilter)
+        setFilteredTasksBeforeSearching(filtered)
+        if (searchText.length > 0) {
+            filtered = filtered.filter(task => task.title.toLowerCase().includes(searchText.toLowerCase()))
+        }
+        setFilteredTasks(filtered)
+        setCurrentPage(1)
+        console.log(tasks)
+    }, [tasks, selectedFilter, searchText])
+
+    useEffect(() => {
+        const updateTasksPerPage = () => {
+            const width = window.innerWidth
+
+            let columns = 1
+            if (width >= 1024) columns = 4
+            else if (width >= 768) columns = 3
+            else if (width >= 640) columns = 2
+
+            setTasksPerPage(columns)
+        }
+
+        updateTasksPerPage()
+
+        window.addEventListener('resize', updateTasksPerPage)
+        return () => window.removeEventListener('resize', updateTasksPerPage)
+    })
+
     return (
         authLoading
         ? (
@@ -208,7 +253,6 @@ const MyTasks = () => {
                 <div className='flex flex-col items-center justify-center min-h-screen bg-linear-to-br from-blue-200 to-purple-400'>
                     <Navbar />
                     {
-                        /* To check whether account is verified or not */
                         !userData?.isAccountVerified
                         ? (
                             <div className='flex flex-col items-center mt-20 px-4 text-center p-10 w-[70%] sm:w-[80%] text-black text-sm'>
@@ -218,7 +262,6 @@ const MyTasks = () => {
                             </div>
                         ) :
                         (
-                            /* Main content */
                             <div className='flex flex-col items-center mt-20 px-4 text-center p-10 w-[70%] sm:w-[80%] text-black text-sm'>
                                 <h1 className='text-3xl text-center font-semibold'>
                                     My Tasks
@@ -234,7 +277,7 @@ const MyTasks = () => {
                                         allStatus.map((f, index) => (
                                             <button
                                             key = {index}
-                                            className={`px-4 py-2 rounded-full border border-indigo-600 transition-all ${selectedFilter === f ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-200 hover:scale-110'}`}
+                                            className={`px-4 py-2 rounded-full border border-indigo-600 transition-all ${selectedFilter === f ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 cursor-pointer hover:bg-gray-200 hover:scale-110'}`}
                                             onClick={() => setSelectedFilter(f)}>
                                                 {f}
                                             </button>
@@ -256,117 +299,110 @@ const MyTasks = () => {
                                     </select>
                                 </div>
 
+                                {
+                                    filteredTasksBeforeSearching.length > 0 &&
+                                    <div className='flex items-center justify-center mb-3 border border-indigo-600 bg-white rounded-full p-2'>
+                                        <Search className='size-4 inline-block' />
+                                        <input type='text' placeholder='Search tasks' value={searchText} onChange={e => setSearchText(e.target.value)} className='rounded ml-3 text-sm' />
+                                    </div>
+                                }
+
                                 <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 w-full'>
-                                    {/* Filter tasks according to selected type */}
-                                    {(() => {
-                                        const filteredTasks = tasks.filter(task => {
-                                            if (selectedFilter === 'Completed') return task.status === 'Completed'
-                                            if (selectedFilter === 'Pending') return task.status === 'Pending'
-                                            if (selectedFilter === 'In-progress') return task.status === 'In-progress'
-                                            return true
-                                        })
+                                    {
+                                        filteredTasks.length === 0
+                                        ? (
+                                            <p className='text-lg font-semibold text-black mt-10 col-span-full'>
+                                                No tasks found {selectedFilter === 'All' ? '' : 'as ' + selectedFilter}
+                                            </p>
+                                        ) : (
+                                            currentTasks.map(task => 
+                                                <div
+                                                key={task._id}
+                                                className={`${selectedFilter !== 'All' ? 'transition-opacity' : ''} p-4 bg-white shadow-md rounded-lg hover:shadow-xl hover:z-10 hover:scale-[1.03] transition-all w-full h-full`}>
+                                                    {/* Title */}
+                                                    <h3 className='font-semibold text-lg text-gray-800 border-b pb-2'>
+                                                        {task.title}
+                                                    </h3>
 
-                                        if (filteredTasks.length === 0) {
-                                            return (
-                                                <p className='text-lg font-semibold text-black mt-10 col-span-full'>
-                                                    No tasks found {selectedFilter === 'All' ? '' : 'as ' + selectedFilter}
-                                                </p>
-                                            )
-                                        }
-
-                                        /* Map filtered tasks */
-                                        return filteredTasks.map(task => (
-                                            <div
-                                            key={task._id}
-                                            className={`${selectedFilter !== 'All' ? 'transition-opacity' : ''} p-4 bg-white shadow-md rounded-lg hover:shadow-xl hover:z-10 hover:scale-[1.03] transition-all w-full h-full`}>
-                                                {/* Title */}
-                                                <h3 className='font-semibold text-lg text-gray-800 border-b pb-2'>
-                                                    {task.title}
-                                                </h3>
-
-                                                {/* Description */}
-                                                <p className='text-gray-600 text-sm mt-2 transition-all duration-300 break-all whitespace-normal min-h-[50px]'>
-                                                    {
+                                                    {/* Description */}
+                                                    <p className='text-gray-600 text-sm mt-2 transition-all duration-300 break-all whitespace-normal min-h-[50px]'>
+                                                        {
                                                         expandedTaskId === task._id ? task.description : task.description.length > 50 ? task.description.substring(0, 100) + '...' : task.description
+                                                        }
+                                                    </p>
+
+                                                    {/* Expand description */}
+                                                    {
+                                                        task.description?.length > 50 &&
+                                                        <div className='flex justify-center items-center mt-3 gap-2'>
+                                                            <p className='text-gray-600 cursor-pointer transition-all hover:scale-120' onClick={() => setExpandedTaskId(expandedTaskId === task._id ? null : task._id)}>
+                                                                {
+                                                                    expandedTaskId === task._id ? <ChevronUp /> : <ChevronDown />
+                                                                }
+                                                            </p>
+                                                        </div>
                                                     }
-                                                </p>
 
-                                                {/* Expand description */}
-                                                {
-                                                    task.description?.length > 50 &&
-                                                    <div className='flex justify-center items-center mt-3 gap-2'>
-                                                        <p className='text-gray-600 cursor-pointer transition-all hover:scale-120' onClick={() => setExpandedTaskId(expandedTaskId === task._id ? null : task._id)}>
-                                                            {
-                                                                expandedTaskId === task._id ? <ChevronUp /> : <ChevronDown />
-                                                            }
-                                                        </p>
-                                                    </div>
-                                                }
-
-                                                {
+                                                    {
                                                     <div className='flex flex-col justify-center items-center mt-5 transition-all'>
                                                         <p className='text-gray-600'>Current status:</p>
                                                         <label className='flex items-center gap-2'>
-                                                            <input
-                                                            type='checkbox'
-                                                            checked={true}
-                                                            className='accent-green-600' />
                                                             <p className='text-yellow-600 text-xs'>{task.status}</p>
                                                         </label>
                                                     </div>
-                                                }
+                                                    }
 
-                                                {/* Checkbox to mark task */}
-                                                <div className='flex flex-col justify-center items-center mt-5 transition-all'>
-                                                    <p className='text-gray-600'>Mark it as:</p>
-                                                    <div className='flex flex-row gap-4'>
+                                                    {/* Checkbox to mark task */}
+                                                    <div className='flex flex-col justify-center items-center mt-5 transition-all'>
+                                                        <p className='text-gray-600'>Mark it as:</p>
+                                                        <div className='flex flex-row gap-4'>
+                                                            {
+                                                                allStatus.filter(status => status != task.status && status != 'All').map(status => (
+                                                                    <label
+                                                                    key={status}
+                                                                    className='flex items-center gap-2 cursor-pointer transition-all hover:scale-120'>
+                                                                        <input
+                                                                        type='checkbox'
+                                                                        name={`status-${task._id}`}
+                                                                        onChange={() => markTask(task._id, status)}
+                                                                        className='accent-green-600 cursor-pointer' />
+                                                                        <p className='text-yellow-600 text-xs'>{status}</p>
+                                                                    </label>
+                                                                ))
+                                                            }
+                                                        </div>
+                                                    </div>
+
+                                                    <div className='flex flex-col justify-center items-center mt-5 gap-2'>
+                                                        {/* Task created at */}
+                                                            {
+                                                            task.createdAt !== 0 && (
+                                                                <p className='text-xs text-gray-500'>
+                                                                    Created at: {convertTime(new Date(task.createdAt))}
+                                                                </p>
+                                                            )
+                                                        }
+
+                                                        {/* Task edited at */}
                                                         {
-                                                            allStatus.filter(status => status != task.status && status != 'All').map(status => (
-                                                                <label
-                                                                key={status}
-                                                                className='flex items-center gap-2 cursor-pointer transition-all hover:scale-120'>
-                                                                    <input
-                                                                    type='checkbox'
-                                                                    name={`status-${task._id}`}
-                                                                    onChange={() => markTask(task._id, status)}
-                                                                    className='accent-green-600 cursor-pointer' />
-                                                                    <p className='text-yellow-600 text-xs'>{status}</p>
-                                                                </label>
-                                                            ))
+                                                            task.editedAt !== 0 && (
+                                                                <p className='text-xs text-gray-500'>
+                                                                    Edited at: {convertTime(new Date(task.editedAt))}
+                                                                </p>
+                                                            )
+                                                        }
+
+                                                        {/* Task completed at */}
+                                                        {
+                                                            task.completedAt !== 0 && (
+                                                                <p className='text-xs text-gray-500'>
+                                                                    Completed at: {convertTime(new Date(task.completedAt))}
+                                                                </p>
+                                                            )
                                                         }
                                                     </div>
-                                                </div>
 
-                                                <div className='flex flex-col justify-center items-center mt-5 gap-2'>
-                                                    {/* Task created at */}
-                                                    {
-                                                        task.created !== 0 && (
-                                                            <p className='text-xs text-gray-500'>
-                                                                Created at: {convertTime(new Date(task.editedAt))}
-                                                            </p>
-                                                        )
-                                                    }
-
-                                                    {/* Task edited at */}
-                                                    {
-                                                        task.editedAt !== 0 && (
-                                                            <p className='text-xs text-gray-500'>
-                                                                Edited at: {convertTime(new Date(task.editedAt))}
-                                                            </p>
-                                                        )
-                                                    }
-
-                                                    {/* Task completed at */}
-                                                    {
-                                                        task.completedAt !== 0 && (
-                                                            <p className='text-xs text-gray-500'>
-                                                                Completed at: {convertTime(new Date(task.completedAt))}
-                                                            </p>
-                                                        )
-                                                    }
-                                                </div>
-
-                                                <div className='flex flex-row justify-center items-center mt-5 gap-2'>
+                                                    <div className='flex flex-row justify-center items-center mt-5 gap-2'>
                                                     {/* Edit task */}
                                                     {
                                                         task.status != 'Completed' && (
@@ -384,16 +420,39 @@ const MyTasks = () => {
                                                     <p className='text-red-500'>
                                                         <Trash2 className='size-5 cursor-pointer transition-all hover:scale-120' onClick={() => deleteTask(task._id)} />
                                                     </p>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        ))
-                                    })()}
+                                            )
+                                        )
+                                    }
                                 </div>
+
+                                {
+                                    totalPages != 1 && filteredTasks.length != 0 &&
+                                    <div className='flex justify-center items-center mt-6 gap-2 flex-wrap'>
+                                        <ChevronLeft
+                                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                        className={`${currentPage === 1 ? 'opacity-50' : 'cursor-pointer hover:scale-110'} text-black rounded disabled:opacity-50`} />
+                                        {
+                                            [...Array(totalPages)].map((_, index) => (
+                                                <button
+                                                key={index}
+                                                onClick={() => handlePageChange(index + 1)}
+                                                className={`px-3 py-1 rounded-md text-sm transition ${currentPage === index + 1 ? 'bg-indigo-600 text-white' : 'bg-gray-200 hover:bg-gray-300 hover:scale-110 cursor-pointer'
+                                                }`}>
+                                                    {index + 1}
+                                                </button>
+                                            ))
+                                        }
+                                        <ChevronRight
+                                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                        className={`${currentPage === totalPages ? 'opacity-50' : 'cursor-pointer hover:scale-110'} text-black rounded disabled:opacity-50`} />
+                                    </div>
+                                }
                             </div>
                         )
                     }
                 </div>
-
                 {
                     /* Gray backgroung while editing/craeting task */
                     (editTask || createNewTask) && (

@@ -21,28 +21,20 @@ const Login = () => {
             
             axios.defaults.withCredentials = true
 
-            if (state === 'Register') {
-                const {data} = await axios.post(`${backendUrl}/api/user/register`, {name, email, password})
-                if (data.success) {
-                    navigate('/login')
-                    toast.success(data.message)
-                }
-                else {
-                    toast.error(error.message)
-                }
-            }
-            else {
-                const {data} = await axios.post(`${backendUrl}/api/user/login`, {email, password})
-                if (data.success) {
+            const {data} = await axios.post(`${backendUrl}/api/user/${state.toLowerCase()}`, {name, email, password})
+            if (data.success) {
+                    navigate('/home')
                     setIsLoggedIn(true)
                     getUserData()
-                    navigate('/')
+                    setName('')
+                    setEmail('')
+                    setPassword('')
+                    toast.success(data.message)
                 }
                 else {
                     toast.error(data.message)
                 }
             }
-        }
         catch (error) {
             toast.error(error.message)
         }
@@ -80,7 +72,7 @@ const Login = () => {
 
                 <div className='flex flex-col items-center mt-20 px-4 text-center bg-slate-900 p-10 rounded-lg shadow-lg w-[70%] sm:w-96 text-indigo-300 text-sm'>
                     <h1 className='text-3xl text-center font-semibold text-white mb-5'>
-                        Login
+                        {state}
                     </h1>
 
                     <form onSubmit={onSubmitHandler}>
