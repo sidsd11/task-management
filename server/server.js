@@ -13,16 +13,16 @@ connectDB()
 
 const allowedOrigins = ['http://localhost:5173', 'http://localhost:5174']
 
-app.use(cors({origin: allowedOrigins, credentials: true}))
+app.use(cors({ origin: allowedOrigins, credentials: true }))
 app.use(express.json())
 app.use(cookieParser())
 
 app.get('/', (req, res) => {
-    res.send('API Working')
+	res.send('API Working')
 })
 
 app.listen(port, () => {
-    console.log(`Server listening on port: ${port}`)
+	console.log(`Server listening on port: ${port}`)
 })
 
 app.use('/api/user', userRouter)

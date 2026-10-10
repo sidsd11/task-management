@@ -8,18 +8,18 @@ import EmailVerify from './pages/EmailVerify'
 import MyTasks from './pages/MyTasks'
 
 const App = () => {
-    return (
-        <div>
-            <ToastContainer />
-            <Routes>
-                <Route path='/home' element={<Home />} />
-                <Route path='/login' element={<Login />} />
-                <Route path='/email-verify' element={<EmailVerify />} />
-                <Route path='/my-tasks' element={<MyTasks />} />
-                <Route path='*' element={<Navigate to='/home' replace />} />
-            </Routes>
-        </div>
-    )
+	return (
+		<div>
+			<ToastContainer />
+			<Routes>
+				<Route path='/home' element={<Home />} />
+				<Route path='/login' element={<Login />} />
+				<Route path='/email-verify' element={<EmailVerify />} />
+				<Route path='/my-tasks' element={<MyTasks />} />
+				<Route path='*' element={<Navigate to='/home' replace />} />
+			</Routes>
+		</div>
+	)
 }
 
 export default App
