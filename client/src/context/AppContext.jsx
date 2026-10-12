@@ -15,7 +15,8 @@ export const AppContextProvider = (props) => {
 
 	const getUserData = async () => {
 		try {
-			const { data } = await axios.get(`${backendUrl}/api/user/get-user-data`)
+			const fields = ['_id', 'name', 'email']
+			const { data } = await axios.post(`${backendUrl}/api/user/get-user-data`, { fields })
 			if (data.success) {
 				setUserData(data.userData)
 			} else {

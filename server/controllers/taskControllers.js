@@ -119,14 +119,17 @@ export const markTaskAs = async (req, res) => {
 		}
 
 		const { status, taskId } = req.params
-		if (!status || !taskId) {
-			return res.status(400).json({ success: false, message: 'Missing details' })
+		if (!status || status !== 'Pending' || status !== 'In-progress' || status !== 'Completed' || !taskId) {
+			return res.status(400).json({ success: false, message: 'Missing or invalid details' })
 		}
 
 		let CompletedAt = status === 'Completed' ? Date.now() : null
 
 		const selectedTask = await userModel.findOneAndUpdate(
-			{ _id: id, 'tasks._id': taskId },
+			{
+				_id: id,
+				'tasks._id': taskId
+			},
 			{
 				$set: {
 					'tasks.$.status': status,

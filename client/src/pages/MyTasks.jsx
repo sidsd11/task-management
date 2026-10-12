@@ -49,7 +49,7 @@ const MyTasks = () => {
 
 	const getTasks = async () => {
 		try {
-			const { data } = await axios.get(`${backendUrl}/api/task/get-all-tasks/${userData.id}`)
+			const { data } = await axios.get(`${backendUrl}/api/task/get-all-tasks`)
 			if (data.success) {
 				setTasks(data.tasks)
 			} else {
@@ -63,7 +63,7 @@ const MyTasks = () => {
 	/* To mark task as completed */
 	const markTask = async (taskId, status) => {
 		try {
-			const { data } = await axios.patch(`${backendUrl}/api/task/mark-task/${status}/${taskId}`, {})
+			const { data } = await axios.patch(`${backendUrl}/api/task/mark-task-as/${status}/${taskId}`)
 			if (data.success) {
 				toast.success(data.message)
 				getTasks()
@@ -103,7 +103,7 @@ const MyTasks = () => {
 				return
 			}
 
-			const { data } = await axios.patch(`${backendUrl}/api/task/edit-task/${editTaskId}`, { title: EditTaskTitle, description: editTaskDescription })
+			const { data } = await axios.patch(`${backendUrl}/api/task/edit-task/${editTaskId}`, { newTitle: EditTaskTitle, newDescription: editTaskDescription })
 			if (data.success) {
 				getTasks()
 				toast.success(data.message)
@@ -173,7 +173,7 @@ const MyTasks = () => {
 	/* Send OTP to verify account */
 	const handleVerify = async () => {
 		try {
-			const { data } = await axios.post(`${backendUrl}/api/user/send-verification-otp`)
+			const { data } = await axios.post(`${backendUrl}/api/user/send-verifu-account-otp`)
 			if (data.success) {
 				sessionStorage.setItem('prevPage', '/my-tasks')
 				navigate('/email-verify')
