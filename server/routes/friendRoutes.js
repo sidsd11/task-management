@@ -8,9 +8,8 @@ const friendRouter = express.Router()
 /* Protected Routes */
 friendRouter.use(userAuth)
 
-friendRouter.get('/get-friends-data/:friendUniqueUserId', isFriend, getFriendsData)
-
 friendRouter.post('/copy-friends-task/:friendUniqueUserId/:taskId', isFriend, copyFriendsTask)
+friendRouter.post('/get-friends-data/:friendUniqueUserId', isFriend, getFriendsData)
 
 friendRouter.patch('/send-friend-request/:friendUniqueUserId', isFriend, sendFriendRequest)
 friendRouter.patch('/friend-request/:action/:friendUniqueUserId', isFriend, acceptOrDeleteFriendRequest)

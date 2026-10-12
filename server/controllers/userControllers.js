@@ -433,7 +433,7 @@ export const getAllUsersList = async (req, res) => {
 			return res.status(400).json({ success: false, message: 'Missing User details' })
 		}
 
-		const { search } = req.body
+		const { search } = req.params
 		if (!search) {
 			return res.status(400).json({ success: false, message: 'Missing details' })
 		}
