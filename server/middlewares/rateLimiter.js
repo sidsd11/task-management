@@ -14,13 +14,11 @@ const rateLimiter = async (req, res, next) => {
 				message: 'Too many requests, please wait for a while'
 			})
 		}
-
-		next()
 	} catch (error) {
-		return res.status(500).json({
-			success: false,
-			message: 'Something went wrong'
-		})
+		console.error('Error in rateLimiter', error)
+		//return res.status(500).json({ success: false, message: 'Something went wrong' })
+	} finally {
+		next()
 	}
 }
 
