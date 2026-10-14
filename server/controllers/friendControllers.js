@@ -98,7 +98,7 @@ export const acceptOrDeleteFriendRequest = async (req, res) => {
 		await user.save()
 		await friend.save()
 
-		return res.status(200).json({ success: true, message: 'Friend request accepted successfully' })
+		return res.status(200).json({ success: true, message: `Friend request ${action}ed successfully` })
 	} catch (error) {
 		console.error('Error while accepting friend request:', error)
 		return res.status(500).json({ success: false, message: 'Something went wrong' })
@@ -176,7 +176,7 @@ export const getFriendsData = async (req, res) => {
 			return res.status(404).json({ success: false, message: 'User does not exist' })
 		}
 
-		return res.status(200).json({ success: true, message: 'Friend data retrieved successfullt', friendData })
+		return res.status(200).json({ success: true, message: 'Friend data retrieved successfullt', data: friendData })
 	} catch (error) {
 		console.error('Error while retrieving friend data:', error)
 		return res.status(500).json({ success: false, message: 'Something went wrong' })
@@ -199,19 +199,19 @@ export const copyFriendsTask = async (req, res) => {
 			return res.status(403).json({ success: false, message: 'You are not friends with this user so you cannot copy their tasks' })
 		}
 
-		const selectedUser = await userModel.findOne({ uniqueUserId: friendUniqueUserId, 'tasks._id': taskId })
-		if (!selectedUser) {
+		const friend = await userModel.findOne({ uniqueUserId: friendUniqueUserId, 'tasks._id': taskId })
+		if (!friend) {
 			return res.status(404).json({ success: false, message: 'Task does not exist' })
 		}
 
-		const task = selectedUser.tasks.id(taskId)
+		const task = friend.tasks.id(taskId)
 
 		const user = await userModel.findById(id)
 		if (!user) {
 			return res.status(404).json({ success: false, message: 'User does not exist' })
 		}
 
-		user.tasks.push({ title: task.title, description: task.description })
+		user.tasks.push({ title: task.title, description: task.description, remark: `Copied from ${friend.name}` })
 		await user.save()
 
 		return res.status(200).json({ success: true, message: 'Task copied successfully' })

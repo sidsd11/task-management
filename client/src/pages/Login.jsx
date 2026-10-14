@@ -1,14 +1,17 @@
-import React, { useContext, useState, useEffect } from 'react'
-import { assets } from '../assets/assets.js'
+import { useContext, useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { AppContext } from '../context/AppContext.jsx'
 import axios from 'axios'
-import { toast } from 'react-toastify'
-import { Loader, User, Mail, Lock } from 'lucide-react'
+import toast from 'react-hot-toast'
+import { User, Mail, Lock } from 'lucide-react'
+
+import { AppContext } from '../context/AppContext'
+import { warnToast } from '../components/WarnToast'
+import LoadingAnimation from '../components/LoadingAnimation'
+import { assets } from '../assets/assets.js'
 
 const Login = () => {
 	const navigate = useNavigate()
-	const { backendUrl, isLoggedIn, setIsLoggedIn, getUserData, loading } = useContext(AppContext)
+	const { backendUrl, isLoggedIn, setIsLoggedIn, getUserData, authLoading, handleErrorStatusCode } = useContext(AppContext)
 
 	const [state, setState] = useState('Login')
 	const [name, setName] = useState('')
@@ -19,12 +22,14 @@ const Login = () => {
 		try {
 			e.preventDefault()
 
-			axios.defaults.withCredentials = true
-
-			const { data } = await axios.post(`${backendUrl}/api/user/${state.toLowerCase()}`, { name, email, password })
+			const { data, headers } = await axios.post(`${backendUrl}/api/user/${state.toLowerCase()}`, { name, email, password })
+			if (headers['redis-ratelimit-message']) {
+				warnToast(headers['redis-ratelimit-message'])
+			}
 			if (data.success) {
 				navigate('/home')
 				setIsLoggedIn(true)
+				sessionStorage.setItem('isLoggedIn', true)
 				getUserData()
 				setName('')
 				setEmail('')
@@ -34,7 +39,7 @@ const Login = () => {
 				toast.error(data.message)
 			}
 		} catch (error) {
-			toast.error(error.message)
+			handleErrorStatusCode(error.response?.status, error)
 		}
 	}
 
@@ -51,11 +56,8 @@ const Login = () => {
 		init()
 	}, [])
 
-	return loading ? (
-		<div className='flex flex-col items-center justify-center min-h-screen bg-linear-to-br from-blue-200 to-purple-400'>
-			<h1 className='text-3xl text-center font-semibold text-black mb-5'>Loading your page...</h1>
-			<Loader className='animate-spin' />
-		</div>
+	return authLoading ? (
+		<LoadingAnimation />
 	) : (
 		<div className='flex flex-col items-center justify-center min-h-screen bg-linear-to-br from-blue-200 to-purple-400'>
 			<div className='w-full flex justify-between items-center p-4 sm:p-6 sm:px-24 absolute top-0'>
@@ -66,7 +68,6 @@ const Login = () => {
 				<h1 className='text-3xl text-center font-semibold text-white mb-5'>{state}</h1>
 
 				<form onSubmit={onSubmitHandler}>
-					{/* Name */}
 					{state === 'Register' && (
 						<div className='mb-4 flex items-center gap-3 w-full px-5 py-2 5 rounded-lg bg-[#333A5C]'>
 							<User className='bg-transparent' />
@@ -74,19 +75,16 @@ const Login = () => {
 						</div>
 					)}
 
-					{/* Email */}
 					<div className='mb-4 flex items-center gap-3 w-full px-5 py-2 5 rounded-lg bg-[#333A5C]'>
 						<Mail className='bg-transparent' />
 						<input type='email' onChange={(e) => setEmail(e.target.value)} value={email} className='bg-transparent outline-none text-white' placeholder='Enter your email' required />
 					</div>
 
-					{/* Password */}
 					<div className='mb-4 flex items-center gap-3 w-full px-5 py-2 5 rounded-lg bg-[#333A5C]'>
 						<Lock className='bg-transparent' />
 						<input type='password' onChange={(e) => setPassword(e.target.value)} value={password} className='bg-transparent outline-none text-white' placeholder='Enter your password' required />
 					</div>
 
-					{/* Submit */}
 					<button className='w-full py-2.5 rounded-full bg-linear-to-br from-indigo-500 to-indigo-900 text-white font-medium'>{state}</button>
 				</form>
 

@@ -20,7 +20,8 @@ const userSchema = new mongoose.Schema(
 				status: { type: String, enum: ['Pending', 'In-progress', 'Completed'], default: 'Pending', required: true },
 				createdAt: { type: Date, default: Date.now },
 				editedAt: { type: Date, default: null },
-				completedAt: { type: Date, default: null }
+				completedAt: { type: Date, default: null },
+				remark: { type: String, default: null }
 			}
 		],
 		friends: [
