@@ -364,7 +364,7 @@ export const getUserData = async (req, res) => {
 			return res.status(400).json({ success: false, message: 'Missing or invalid fields' })
 		}
 
-		const allowedFields = ['_id', 'uniqueUserId', 'name', 'email', 'isAccountVerified', 'tasks', 'friends', 'friendRequests', 'createdAt', 'updatedAt']
+		const allowedFields = ['_id', 'uniqueUserId', 'name', 'email', 'isAccountVerified', 'tasks', 'friends', 'friendRequests', 'createdAt', 'updatedAt', 'verifyAccountOtpExpiresAt', 'resetPasswordOtpExpiresAt']
 		const toBeSentFields = fields.filter((field) => allowedFields.includes(field))
 		if (toBeSentFields.length === 0) {
 			return res.status(400).json({ success: false, message: 'No valid fields requested' })
@@ -395,11 +395,6 @@ export const updateUserProfile = async (req, res) => {
 		}
 		const normalizedNewEmail = newEmail.trim().toLowerCase()
 
-		const emailCheck = await userModel.findOne({ email: normalizedNewEmail })
-		if (emailCheck) {
-			return res.status(400).json({ success: false, message: 'Account with this email address already exists' })
-		}
-
 		const user = await userModel.findById(id)
 		if (!user) {
 			return res.status(404).json({ success: false, message: 'User does not exist' })
@@ -411,11 +406,28 @@ export const updateUserProfile = async (req, res) => {
 			return res.status(400).json({ success: false, message: 'Old and new information cannot be same' })
 		}
 
+		const emailCheck = await userModel.findOne({ email: normalizedNewEmail })
+		if (emailCheck && emailChanged) {
+			return res.status(400).json({ success: false, message: 'Account with this email address already exists' })
+		}
+
 		user.name = newName.trim()
 		user.email = normalizedNewEmail
 		if (emailChanged) {
 			user.isAccountVerified = false
 			user.accountVerifiedAt = null
+
+			try {
+				const mailOptions = {
+					from: process.env.SENDER_EMAIL,
+					to: normalizedNewEmail,
+					subject: 'Welcome to To-Do-List',
+					text: `Welcome ${newName.trim()} to To-Do-List. Your account has been created successfully.`
+				}
+				await transporter.sendMail(mailOptions)
+			} catch (emailError) {
+				console.error('Error while sending welcome email after changing email address:', emailError)
+			}
 		}
 		await user.save()
 

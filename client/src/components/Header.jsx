@@ -9,7 +9,7 @@ import { warnToast } from './WarnToast'
 
 const Header = () => {
 	const navigate = useNavigate()
-	const { backendUrl, userData, isLoggedIn, handleErrorStatusCode } = useContext(AppContext)
+	const { backendUrl, userData, getUserData, isLoggedIn, handleErrorStatusCode } = useContext(AppContext)
 
 	const handleVerify = async () => {
 		try {
@@ -26,6 +26,7 @@ const Header = () => {
 		} catch (error) {
 			handleErrorStatusCode(error.response?.status, error)
 		}
+		getUserData()
 	}
 
 	return (
@@ -40,7 +41,7 @@ const Header = () => {
 				<div className='flex flex-col items-center px-4 text-center p-10 w-[70%] sm:w-[80%] text-black text-sm'>
 					<h1 className='text-2xl text-center font-semibold'>
 						Your account is not verified. Please{' '}
-						<span className='cursor-pointer underline' onClick={handleVerify}>
+						<span className='inline-block tranisition-transofrm duration-300 hover:scale-110 cursor-pointer underline' onClick={handleVerify}>
 							verify
 						</span>{' '}
 						it to create or view tasks or to make new friends.

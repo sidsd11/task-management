@@ -156,7 +156,6 @@ const FriendsOrUsers = (props) => {
 		}
 		getFriendsOrUsers()
 		getFriendsAndFriendRequests()
-		getUserData()
 	}, [authLoading, isLoggedIn])
 
 	useEffect(() => {
@@ -205,7 +204,7 @@ const FriendsOrUsers = (props) => {
 						<h1 className='text-3xl text-center font-semibold'>{props.type === 'friend' ? 'My friends' : 'Search users'}</h1>
 
 						{(props.type === 'friend' && friendsOrUsers.length > 0) ||
-							(props.type !== 'friend' && (
+							(props.type === 'user' && (
 								<div className='flex items-center justify-center mb-3 border border-indigo-600 bg-white rounded-full p-2'>
 									<Search className='size-4 inline-block' />
 									<input type='text' placeholder={props.type === 'friend' ? 'Search friends' : 'Search users'} value={searchText} onChange={(e) => setSearchText(e.target.value)} className='rounded ml-3 text-sm' />
@@ -216,20 +215,20 @@ const FriendsOrUsers = (props) => {
 							{props.type === 'friend' && friendsOrUsers.length === 0 && (
 								<p className='text-lg font-semibold text-black mt-10 col-span-full'>
 									You don't have any friends yet.{' '}
-									<span className='underline cursor-pointer' onClick={() => navigate('/search-users')}>
+									<span className='inline-block underline cursor-pointer tranisition-transofrm duration-300 hover:scale-110' onClick={() => navigate('/search-users')}>
 										Search
 									</span>{' '}
 									for other users to add them as friend.
 								</p>
 							)}
 							{props.type === 'user' && searchText.length === 0 ? (
-								<p className='text-lg font-semibold text-black mt-10 col-span-full'>Search for users</p>
+								<p className='text-lg font-semibold text-black mt-10 col-span-full'>Please type to search other users</p>
 							) : filteredFriendsOrUsers.length === 0 ? (
 								<p className='text-lg font-semibold text-black mt-10 col-span-full'>No {props.type === 'friend' ? 'friends' : 'users'} found</p>
 							) : (
 								currentFriendsOrUsersPerPages.map((friendOrUser) => (
-									<div key={friendOrUser.uniqueUserId} className='cursor-pointer p-4 bg-white shadow-md rounded-lg hover:shadow-xl hover:z-10 hover:scale-[1.03] transition-all w-full h-full'>
-										<h3 className='font-semibold text-lg text-gray-800 border-b pb-2' onClick={() => navigate(`/my-friends-tasks/${friendOrUser.uniqueUserId}/${friendOrUser.name}`)}>
+									<div key={friendOrUser.uniqueUserId} className='p-4 bg-white shadow-md rounded-lg hover:shadow-xl hover:z-10 hover:scale-[1.03] transition-all w-full h-full'>
+										<h3 className={`font-semibold text-lg text-gray-800 border-b pb-2 ${friendCheck(friendOrUser.uniqueUserId) && 'cursor-pointer'}`} onClick={() => friendCheck(friendOrUser.uniqueUserId) && navigate(`/my-friends-tasks/${friendOrUser.uniqueUserId}/${friendOrUser.name}`)}>
 											{friendOrUser.name}
 										</h3>
 
@@ -239,7 +238,7 @@ const FriendsOrUsers = (props) => {
 											<>
 												<p className='p-2 border-b'>Since: {convertTime(new Date(friendOrUser.since))}</p>
 												<div className='flex flex-row items-center justify-center gap-10 mt-2'>
-													<Trash2 className='size-5 cursor-pointer transition-all hover:scale-120' onClick={() => removeFriend(friendOrUser.uniqueUserId)} />
+													<Trash2 className='text-red-500 size-5 cursor-pointer transition-all hover:scale-120' onClick={() => removeFriend(friendOrUser.uniqueUserId)} />
 												</div>
 											</>
 										) : (
@@ -250,7 +249,7 @@ const FriendsOrUsers = (props) => {
 														<Check className='text-green-700 size-5 mt-1 cursor-pointer transition-all hover:scale-120' onClick={() => acceptOrDeleteFriendRequest('accept', friendOrUser.uniqueUserId)} />
 													</>
 												) : requestCheck(friendOrUser.uniqueUserId, 'sent') ? (
-													<Forward className='size-5 mt-1 cursor-pointer transition-all hover:scale-120' />
+													<Forward className='size-5 mt-1' />
 												) : friendCheck(friendOrUser.uniqueUserId) ? (
 													<div className='flex flex-row items-center justify-center gap-10 mt-2'>
 														<Handshake className='size-5' />
