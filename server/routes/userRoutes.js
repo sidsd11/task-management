@@ -15,7 +15,7 @@ userRouter.post('/logout', logout)
 userRouter.use(userAuth)
 
 userRouter.get('/is-auth', isAuth)
-userRouter.get('/get-users-list/:search', getAllUsersList)
+userRouter.get('/get-users-list', getAllUsersList)
 
 userRouter.post('/get-user-data', getUserData)
 userRouter.post('/send-verify-account-otp', sendVerifyAccountOtp)

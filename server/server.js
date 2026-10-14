@@ -16,7 +16,11 @@ app.set('trust proxy', 1)
 const port = process.env.PORT || 3000
 const allowedOrigins = ['http://localhost:5173']
 
-app.use(cors({ origin: allowedOrigins, credentials: true }))
+app.use(cors({ origin: allowedOrigins, credentials: true, exposedHeaders: ['redis-ratelimit-message'] }))
+app.use((req, res, next) => {
+	res.set('Cache-Control', 'no-store')
+	next()
+})
 app.use(express.json())
 app.use(cookieParser())
 app.use(rateLimiter)

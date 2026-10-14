@@ -169,7 +169,7 @@ export const logout = async (req, res) => {
 			sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict'
 		})
 
-		return res.status(200).json({ success: true, message: 'User logged out successfully' })
+		return res.status(200).json({ success: true, message: 'Logged out successfully' })
 	} catch (error) {
 		console.error('Error while logging out user:', error)
 		return res.status(500).json({ success: false, message: 'Something went wrong' })
@@ -433,16 +433,11 @@ export const getAllUsersList = async (req, res) => {
 			return res.status(400).json({ success: false, message: 'Missing User details' })
 		}
 
-		const { search } = req.params
-		if (!search) {
-			return res.status(400).json({ success: false, message: 'Missing details' })
-		}
-
 		const allowedFields = ['uniqueUserId', 'name']
 
-		const usersList = await userModel.find({ uniqueUserId: { $regex: search.trim(), $options: 'i' }, _id: { $ne: id } }).select(allowedFields.join(' '))
+		const usersList = await userModel.find({ _id: { $ne: id } }).select(allowedFields.join(' '))
 
-		return res.status(200).json({ success: true, message: 'Users list retreived successfully', usersList })
+		return res.status(200).json({ success: true, message: 'Users list retreived successfully', data: usersList })
 	} catch (error) {
 		console.error('Error while retrieving users list:', error)
 		return res.status(500).json({ success: false, message: 'Something went wrong' })

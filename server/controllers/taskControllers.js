@@ -1,24 +1,5 @@
 import userModel from '../models/userModel.js'
 
-export const getAllTasks = async (req, res) => {
-	try {
-		const { id } = req.user
-		if (!id) {
-			return res.status(400).json({ success: false, message: 'Missing User details' })
-		}
-
-		const user = await userModel.findById(id)
-		if (!user) {
-			return res.status(404).json({ success: false, message: 'User does not exist' })
-		}
-
-		return res.status(200).json({ success: true, message: 'Tasks retrieved successfully', tasks: user.tasks })
-	} catch (error) {
-		console.error('Error while retrieving tasks:', error)
-		return res.status(401).json({ success: false, message: 'Something went wrong' })
-	}
-}
-
 export const getSingleTask = async (req, res) => {
 	try {
 		const { id } = req.user
@@ -31,10 +12,12 @@ export const getSingleTask = async (req, res) => {
 			return res.status(400).json({ success: false, message: 'Missing details' })
 		}
 
-		const task = await userModel.findOne({ _id: id, 'tasks._id': taskId })
-		if (!task) {
+		const selectedTask = await userModel.findOne({ _id: id, 'tasks._id': taskId })
+		if (!selectedTask) {
 			return res.status(404).json({ success: false, message: 'Task not found' })
 		}
+
+		const task = selectedTask.tasks.id(taskId)
 
 		return res.status(200).json({ success: true, message: 'Tasks retrieved successfully', task })
 	} catch (error) {
@@ -119,7 +102,7 @@ export const markTaskAs = async (req, res) => {
 		}
 
 		const { status, taskId } = req.params
-		if (!status || status !== 'Pending' || status !== 'In-progress' || status !== 'Completed' || !taskId) {
+		if (!status || (status !== 'Pending' && status !== 'In-progress' && status !== 'Completed') || !taskId) {
 			return res.status(400).json({ success: false, message: 'Missing or invalid details' })
 		}
 

@@ -1,51 +1,58 @@
-import React, { useContext } from 'react'
-import { AppContext } from '../context/AppContext'
+import { useContext, useEffect, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import axios from 'axios'
-import { toast } from 'react-toastify'
+import { Search } from 'lucide-react'
+
 import { assets } from '../assets/assets'
+import { AppContext } from '../context/AppContext'
+import toast from 'react-hot-toast'
+import { warnToast } from '../components/WarnToast'
 
 const Navbar = () => {
 	const navigate = useNavigate()
 
 	const currPage = useLocation().pathname
-	const { userData, backendUrl, setUserData, setIsLoggedIn } = useContext(AppContext)
+	const { userData, backendUrl, getUserData, setUserData, setIsLoggedIn, handleErrorStatusCode } = useContext(AppContext)
 
-	/* Send OTP to verify account */
 	const sendVerificationOtp = async () => {
 		try {
-			axios.defaults.withCredentials = true
-
-			const { data } = await axios.post(`${backendUrl}/api/user/send-verify-account-otp`)
+			const { data, headers } = await axios.post(`${backendUrl}/api/user/send-verify-account-otp`)
+			if (headers['redis-ratelimit-message']) {
+				warnToast(headers['redis-ratelimit-message'])
+			}
 			if (data.success) {
-				sessionStorage.setItem('prevPage', '/')
 				navigate('/email-verify')
 				toast.success(data.message)
 			} else {
 				toast.error(data.message)
 			}
 		} catch (error) {
-			toast.error(error.message)
+			handleErrorStatusCode(error.response?.status, error)
 		}
 	}
 
-	/* Logout */
 	const logout = async () => {
 		try {
-			axios.defaults.withCredentials = true
-
-			const { data } = await axios.post(`${backendUrl}/api/user/logout`)
+			const { data, headers } = await axios.post(`${backendUrl}/api/user/logout`)
+			if (headers['redis-ratelimit-message']) {
+				warnToast(headers['redis-ratelimit-message'])
+			}
 			if (data.success) {
 				setIsLoggedIn(false)
+				sessionStorage.removeItem('isLoggedIn')
+				sessionStorage.removeItem('userData')
 				setUserData(null)
 				navigate('/')
+				toast.success(data.message)
 			} else {
 				toast.error(data.message)
 			}
 		} catch (error) {
-			toast.error(error.message)
+			handleErrorStatusCode(error.response?.status, error)
 		}
 	}
+
+	useEffect(() => {})
 
 	return (
 		<div className='w-full flex justify-between items-center p-4 sm:p-6 sm:px-24 absolute top-0'>
@@ -68,6 +75,16 @@ const Navbar = () => {
 							{currPage !== '/my-tasks' && (
 								<li onClick={() => navigate('/my-tasks')} className='py-2 px-2 whitespace-nowrap rounded-lg transition-all cursor-pointer hover:bg-linear-to-r hover:from-blue-100 hover:to-purple-200 hover:scale-110'>
 									My Tasks
+								</li>
+							)}
+							{currPage !== '/my-friends' && (
+								<li onClick={() => navigate('/my-friends')} className='py-2 px-2 whitespace-nowrap rounded-lg transition-all cursor-pointer hover:bg-linear-to-r hover:from-blue-100 hover:to-purple-200 hover:scale-110'>
+									My Friends
+								</li>
+							)}
+							{currPage !== `/search-users` && (
+								<li onClick={() => navigate('/search-users')} className='py-2 px-2 whitespace-nowrap rounded-lg transition-all cursor-pointer hover:bg-linear-to-r hover:from-blue-100 hover:to-purple-200 hover:scale-110'>
+									Search Users
 								</li>
 							)}
 							<li onClick={logout} className='py-2 px-2 whitespace-nowrap rounded-lg transition-all cursor-pointer hover:bg-linear-to-r hover:from-blue-100 hover:to-purple-200 hover:scale-110'>

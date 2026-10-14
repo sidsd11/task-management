@@ -1,31 +1,52 @@
 import axios from 'axios'
 import { createContext, useEffect, useState } from 'react'
-import { toast } from 'react-toastify'
+import toast from 'react-hot-toast'
+
+import { warnToast } from '../components/WarnToast'
 
 export const AppContext = createContext()
 
 export const AppContextProvider = (props) => {
-	axios.defaults.withCredentials = true
-
 	const backendUrl = import.meta.env.VITE_BACKEND_URL
-	const [isLoggedIn, setIsLoggedIn] = useState(false)
-	const [userData, setUserData] = useState(null)
+	const [isLoggedIn, setIsLoggedIn] = useState(() => sessionStorage.getItem('isLoggedIn') === 'true')
+	const [userData, setUserData] = useState(() => {
+		try {
+			return JSON.parse(sessionStorage.getItem('userData')) ?? null
+		} catch {
+			return null
+		}
+	})
 	const [authLoading, setAuthLoading] = useState(true)
-	const [loading, setLoading] = useState(true)
+	const [authStatus, setAuthStatus] = useState('checking')
 
 	const getUserData = async () => {
 		try {
-			const fields = ['_id', 'name', 'email']
-			const { data } = await axios.post(`${backendUrl}/api/user/get-user-data`, { fields })
+			const fields = ['_id', 'name', 'email', 'isAccountVerified']
+			const { data, headers } = await axios.post(`${backendUrl}/api/user/get-user-data`, { fields })
+			if (headers['redis-ratelimit-message']) {
+				warnToast(headers['redis-ratelimit-message'])
+			}
 			if (data.success) {
-				setUserData(data.userData)
+				setUserData(data.data)
+				sessionStorage.setItem('userData', JSON.stringify(data.data))
 			} else {
-				setUserData(null)
 				toast.error(data.message)
 			}
 		} catch (error) {
-			toast.error(error.message)
+			handleErrorStatusCode(error.response?.status, error)
+		}
+	}
+
+	const handleErrorStatusCode = (status, error) => {
+		if (status === 401) {
+			setIsLoggedIn(false)
+			sessionStorage.removeItem('isLoggedIn')
 			setUserData(null)
+			sessionStorage.removeItem('userData')
+			setAuthStatus('unauthenticated')
+		} else {
+			setAuthStatus('unknown')
+			toast.error(error.response?.data?.message || error.message)
 		}
 	}
 
@@ -33,21 +54,27 @@ export const AppContextProvider = (props) => {
 		const init = async () => {
 			setAuthLoading(true)
 			try {
-				const { data } = await axios.get(`${backendUrl}/api/user/is-auth`)
+				const { data, headers } = await axios.get(`${backendUrl}/api/user/is-auth`)
+				if (headers['redis-ratelimit-message']) {
+					warnToast(headers['redis-ratelimit-message'])
+				}
 				if (data.success) {
 					setIsLoggedIn(true)
+					sessionStorage.setItem('isLoggedIn', true)
 					await getUserData()
+					setAuthStatus('authenticated')
 				} else {
 					setIsLoggedIn(false)
+					sessionStorage.removeItem('isLoggedIn')
 					setUserData(null)
+					sessionStorage.removeItem('userData')
+					setAuthStatus('unauthenticated')
 				}
 			} catch (error) {
-				toast.error(error.message)
-				setIsLoggedIn(false)
-				setUserData(null)
+				handleErrorStatusCode(error.response?.status, error)
+			} finally {
+				setAuthLoading(false)
 			}
-			setLoading(false)
-			setAuthLoading(false)
 		}
 		init()
 	}, [])
@@ -61,8 +88,9 @@ export const AppContextProvider = (props) => {
 		getUserData,
 		authLoading,
 		setAuthLoading,
-		loading,
-		setLoading
+		authStatus,
+		setAuthStatus,
+		handleErrorStatusCode
 	}
 
 	return <AppContext.Provider value={value}>{props.children}</AppContext.Provider>
