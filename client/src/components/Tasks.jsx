@@ -207,7 +207,6 @@ const Tasks = (props) => {
 			return
 		}
 		getTasks()
-		getUserData()
 	}, [authLoading, isLoggedIn])
 
 	useEffect(() => {
@@ -371,7 +370,7 @@ const Tasks = (props) => {
 											<div className='flex flex-row justify-center items-center mt-5 gap-2'>
 												<p>
 													<ClipboardCopy
-														className='size-5 cursor-pointer transition-all duration-300 hover:scale-120'
+														className='size-5 cursor-pointer transition-all hover:scale-120'
 														onClick={() => {
 															copyFriendsTask(props.uniqueUserId, task._id, index)
 														}}

@@ -1,7 +1,6 @@
 import { useContext, useEffect, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import axios from 'axios'
-import { Search } from 'lucide-react'
 
 import { assets } from '../assets/assets'
 import { AppContext } from '../context/AppContext'
@@ -12,24 +11,7 @@ const Navbar = () => {
 	const navigate = useNavigate()
 
 	const currPage = useLocation().pathname
-	const { userData, backendUrl, getUserData, setUserData, setIsLoggedIn, handleErrorStatusCode } = useContext(AppContext)
-
-	const sendVerificationOtp = async () => {
-		try {
-			const { data, headers } = await axios.post(`${backendUrl}/api/user/send-verify-account-otp`)
-			if (headers['redis-ratelimit-message']) {
-				warnToast(headers['redis-ratelimit-message'])
-			}
-			if (data.success) {
-				navigate('/email-verify')
-				toast.success(data.message)
-			} else {
-				toast.error(data.message)
-			}
-		} catch (error) {
-			handleErrorStatusCode(error.response?.status, error)
-		}
-	}
+	const { userData, backendUrl, setUserData, setIsLoggedIn, handleErrorStatusCode } = useContext(AppContext)
 
 	const logout = async () => {
 		try {
@@ -52,8 +34,6 @@ const Navbar = () => {
 		}
 	}
 
-	useEffect(() => {})
-
 	return (
 		<div className='w-full flex justify-between items-center p-4 sm:p-6 sm:px-24 absolute top-0'>
 			<img src={assets.logo} onClick={() => navigate('/')} className='w-28 sm:w-32 cursor-pointer hover:scale-110 transition-all' />
@@ -67,22 +47,27 @@ const Navbar = () => {
 									Home
 								</li>
 							)}
-							{!userData?.isAccountVerified && currPage !== '/email-verify' && (
-								<li onClick={sendVerificationOtp} className='py-2 px-2 whitespace-nowrap rounded-lg transition-all cursor-pointer hover:bg-linear-to-r hover:from-blue-100 hover:to-purple-200 hover:scale-110'>
-									Verify Email
+							{currPage !== '/my-profile' && (
+								<li onClick={() => navigate('/my-profile')} className='py-2 px-2 whitespace-nowrap rounded-lg transition-all cursor-pointer hover:bg-linear-to-r hover:from-blue-100 hover:to-purple-200 hover:scale-110'>
+									My Profile
 								</li>
 							)}
-							{currPage !== '/my-tasks' && (
+							{userData?.isAccountVerified && currPage !== '/my-tasks' && (
 								<li onClick={() => navigate('/my-tasks')} className='py-2 px-2 whitespace-nowrap rounded-lg transition-all cursor-pointer hover:bg-linear-to-r hover:from-blue-100 hover:to-purple-200 hover:scale-110'>
 									My Tasks
 								</li>
 							)}
-							{currPage !== '/my-friends' && (
+							{userData?.isAccountVerified && currPage !== '/my-friends' && (
 								<li onClick={() => navigate('/my-friends')} className='py-2 px-2 whitespace-nowrap rounded-lg transition-all cursor-pointer hover:bg-linear-to-r hover:from-blue-100 hover:to-purple-200 hover:scale-110'>
 									My Friends
 								</li>
 							)}
-							{currPage !== `/search-users` && (
+							{userData?.isAccountVerified && currPage !== '/friend-requests' && (
+								<li onClick={() => navigate('/friend-requests')} className='py-2 px-2 whitespace-nowrap rounded-lg transition-all cursor-pointer hover:bg-linear-to-r hover:from-blue-100 hover:to-purple-200 hover:scale-110'>
+									Friend Requests
+								</li>
+							)}
+							{userData?.isAccountVerified && currPage !== `/search-users` && (
 								<li onClick={() => navigate('/search-users')} className='py-2 px-2 whitespace-nowrap rounded-lg transition-all cursor-pointer hover:bg-linear-to-r hover:from-blue-100 hover:to-purple-200 hover:scale-110'>
 									Search Users
 								</li>
