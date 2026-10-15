@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from 'react'
+import { useContext } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import axios from 'axios'
 
@@ -36,7 +36,7 @@ const Navbar = () => {
 
 	return (
 		<div className='w-full flex justify-between items-center p-4 sm:p-6 sm:px-24 absolute top-0'>
-			<img src={assets.logo} onClick={() => navigate('/')} className='w-28 sm:w-32 cursor-pointer hover:scale-110 transition-all' />
+			<img src={assets.logo} onClick={() => navigate('/')} className='w-20 sm:w-32 cursor-pointer hover:scale-110 transition-all' />
 			{userData ? (
 				<div className='w-8 h-8 flex justify-center items-center rounded-full bg-black text-white relative group cursor-pointer'>
 					{userData?.name[0].toUpperCase()}
@@ -79,7 +79,7 @@ const Navbar = () => {
 					</div>
 				</div>
 			) : (
-				<button onClick={() => navigate('/login')} className='flex items-center gap-2 border border-gray-500 rounded-full px-6 py-2 text-gray-800 bg-white hover:bg-red-400 hover:scale-110 transition-all cursor-pointer '>
+				<button onClick={() => navigate('/login')} className={`${currPage === '/login' ? 'hidden' : 'flex'} items-center gap-2 border border-gray-500 rounded-full px-6 py-2 text-gray-800 bg-white hover:bg-red-400 hover:scale-110 transition-all cursor-pointer`}>
 					Login <img src={assets.arrow_icon} />
 				</button>
 			)}

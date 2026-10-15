@@ -26,12 +26,12 @@ export const sendFriendRequest = async (req, res) => {
 			return res.status(400).json({ success: false, message: 'You are already friends with this user' })
 		}
 
-		const isRequestAlreadySent = user.friendRequests.sent.some((friend) => friend.uniqueUserId === friendUniqueUserId)
+		const isRequestAlreadySent = user.friendRequests.sent.some((request) => request.uniqueUserId === friendUniqueUserId)
 		if (isRequestAlreadySent) {
 			return res.status(400).json({ success: false, message: 'You have already sent a friend request to this user' })
 		}
 
-		const isRequestAlreadyReceived = user.friendRequests.received.some((friend) => friend.uniqueUserId === friendUniqueUserId)
+		const isRequestAlreadyReceived = user.friendRequests.received.some((request) => request.uniqueUserId === friendUniqueUserId)
 		if (isRequestAlreadyReceived) {
 			return res.status(400).json({ success: false, message: 'This user has already sent you a friend request' })
 		}
@@ -44,6 +44,69 @@ export const sendFriendRequest = async (req, res) => {
 		return res.status(200).json({ success: true, message: 'Friend request sent successfully' })
 	} catch (error) {
 		console.error('Error while sending friend request:', error)
+		return res.status(500).json({ success: false, message: 'Something went wrong' })
+	}
+}
+
+export const deleteSentFriendRequest = async (req, res) => {
+	try {
+		const { id } = req.user
+		if (!id) {
+			return res.status(400).json({ success: false, message: 'Missing User details' })
+		}
+
+		const { friendUniqueUserId } = req.params
+		if (!friendUniqueUserId) {
+			return res.status(400).json({ success: false, message: 'Missing details' })
+		}
+
+		if (req.isFriend) {
+			return res.status(400).json({ success: false, message: 'You are already friends with this user' })
+		}
+
+		const user = await userModel.findById(id)
+		if (!user) {
+			return res.status(404).json({ success: false, message: 'User does not exist' })
+		}
+
+		const sentRequestIndex = user.friendRequests.sent.findIndex((request) => request.uniqueUserId === friendUniqueUserId)
+
+		const friend = await userModel.findOne({ uniqueUserId: friendUniqueUserId })
+		if (!friend) {
+			if (sentRequestIndex !== -1) {
+				user.friendRequests.sent.splice(sentRequestIndex, 1)
+				await user.save()
+			}
+
+			return res.status(404).json({ success: false, message: 'Friend does not exist' })
+		}
+
+		const receivedRequestIndex = friend.friendRequests.received.findIndex((request) => request.uniqueUserId === user.uniqueUserId)
+		if (sentRequestIndex === -1) {
+			if (receivedRequestIndex !== -1) {
+				friend.friendRequests.received.splice(receivedRequestIndex, 1)
+				await friend.save()
+			}
+
+			return res.status(400).json({ success: false, message: 'You did not send friend request to this user' })
+		}
+
+		if (receivedRequestIndex === -1) {
+			user.friendRequests.sent.splice(sentRequestIndex, 1)
+			await user.save()
+
+			return res.status(400).json({ success: false, message: 'This user did not receive a friend request from you' })
+		}
+
+		user.friendRequests.sent.splice(sentRequestIndex, 1)
+		friend.friendRequests.received.splice(receivedRequestIndex, 1)
+
+		await user.save()
+		await friend.save()
+
+		return res.status(200).json({ success: true, message: 'Friend request deleted successfully' })
+	} catch (error) {
+		console.error('Error while deleting friend request:', error)
 		return res.status(500).json({ success: false, message: 'Something went wrong' })
 	}
 }
@@ -69,18 +132,24 @@ export const acceptOrDeleteFriendRequest = async (req, res) => {
 			return res.status(400).json({ success: false, message: 'You are already friends with this user' })
 		}
 
-		const receivedRequestIndex = user.friendRequests.received.findIndex((friend) => friend.uniqueUserId === friendUniqueUserId)
+		const receivedRequestIndex = user.friendRequests.received.findIndex((request) => request.uniqueUserId === friendUniqueUserId)
 		if (receivedRequestIndex === -1) {
 			return res.status(400).json({ success: false, message: 'You did not receive a friend request from this user' })
 		}
 
 		const friend = await userModel.findOne({ uniqueUserId: friendUniqueUserId })
 		if (!friend) {
+			user.friendRequests.received.splice(receivedRequestIndex, 1)
+			await user.save()
+
 			return res.status(404).json({ success: false, message: 'Friend user does not exist' })
 		}
 
-		const sentRequestIndex = friend.friendRequests.sent.findIndex((friend) => friend.uniqueUserId === user.uniqueUserId)
+		const sentRequestIndex = friend.friendRequests.sent.findIndex((request) => request.uniqueUserId === user.uniqueUserId)
 		if (sentRequestIndex === -1) {
+			user.friendRequests.received.splice(receivedRequestIndex, 1)
+			await user.save()
+
 			return res.status(400).json({ success: false, message: 'This user did not send you a friend request' })
 		}
 

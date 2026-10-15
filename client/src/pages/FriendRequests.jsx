@@ -2,7 +2,7 @@ import { useContext, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import toast from 'react-hot-toast'
-import { Check, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, CirclePlus, ClipboardCopy, Pen, Search, Trash2, X } from 'lucide-react'
+import { Check, ChevronLeft, ChevronRight, Search, Trash2, X } from 'lucide-react'
 
 import { AppContext } from '../context/AppContext'
 import LoadingAnimation from '../components/LoadingAnimation'
@@ -11,7 +11,7 @@ import { warnToast } from '../components/WarnToast'
 
 const FriendRequests = () => {
 	const navigate = useNavigate()
-	const { backendUrl, isLoggedIn, userData, getUserData, authLoading, handleErrorStatusCode } = useContext(AppContext)
+	const { backendUrl, isLoggedIn, userData, authLoading, handleErrorStatusCode } = useContext(AppContext)
 
 	const [friendRequests, setFriendRequests] = useState({ sent: [], received: [] })
 
@@ -50,6 +50,23 @@ const FriendRequests = () => {
 		} catch (error) {
 			handleErrorStatusCode(error.response?.status, error)
 		}
+	}
+
+	const deleteSentFriendRequest = async (friendUniqueUserId) => {
+		try {
+			const { data, headers } = await axios.patch(`${backendUrl}/api/friend/delete-sent-friend-request/${friendUniqueUserId}`)
+			if (headers['redis-ratelimit-message']) {
+				warnToast(headers['redis-ratelimit-message'])
+			}
+			if (data.success) {
+				toast.success(data.message)
+			} else {
+				toast.error(data.message)
+			}
+		} catch (error) {
+			handleErrorStatusCode(error.response?.status, error)
+		}
+		getFriendRequests()
 	}
 
 	const acceptOrDeleteFriendRequest = async (action, friendUniqueUserId) => {
@@ -161,7 +178,7 @@ const FriendRequests = () => {
 						{filteredFriendRequestsBeforeSearching.length > 0 && (
 							<div className='flex items-center justify-center mb-3 border border-indigo-600 bg-white rounded-full p-2'>
 								<Search className='size-4 inline-block' />
-								<input type='text' placeholder='Search users' value={searchText} onChange={(e) => setSearchText(e.target.value)} className='rounded ml-3 text-sm' />
+								<input type='text' placeholder='Search users' value={searchText} onChange={(e) => setSearchText(e.target.value)} className='w-full rounded ml-3 text-sm' />
 							</div>
 						)}
 
@@ -171,23 +188,39 @@ const FriendRequests = () => {
 							) : (
 								currentFriendRequests.map((friendRequest) => (
 									<div key={friendRequest._id} className='p-4 bg-white shadow-md rounded-lg hover:shadow-xl hover:z-10 hover:scale-[1.03] transition-all w-full h-full'>
-										<h3 className='font-semibold text-lg text-gray-800 border-b pb-2'>{friendRequest.name}</h3>
+										<h3 className='font-semibold text-[10px] md:text-lg text-gray-800 border-b pb-2'>{friendRequest.name}</h3>
 
-										<h3 className='font-semibold text-base text-gray-800 border-b pb-2'>{friendRequest.uniqueUserId}</h3>
+										<h3 className='font-semibold text-[10px] md:text-lg text-gray-800 border-b pb-2'>{friendRequest.uniqueUserId}</h3>
 
-										<h3 className='font-semibold text-base text-gray-800 border-b pb-2'>
+										<h3 className='text-[10px] md:text-lg text-gray-800 border-b pb-2'>
 											{selectedFilter} on: {convertTime(new Date(friendRequest.timestamp))}
 										</h3>
-										{selectedFilter === 'Received' && (
+										{selectedFilter === 'Received' ? (
 											<div className='flex flex-row items-center justify-center'>
 												<X className='text-red-500 size-5 mt-1 mr-10 cursor-pointer transition-all hover:scale-120' onClick={() => acceptOrDeleteFriendRequest('reject', friendRequest.uniqueUserId)} />
-												<Check className='text-green-700 size-5 mt-1 cursor-pointer transition-all hover:scale-120' onClick={() => acceptOrDeleteFriendRequest('accept', friendRequest.uniqueUserId)} />
+												<Check className='text-green-500 size-5 mt-1 cursor-pointer transition-all hover:scale-120' onClick={() => acceptOrDeleteFriendRequest('accept', friendRequest.uniqueUserId)} />
+											</div>
+										) : (
+											<div className='flex flex-row items-center justify-center'>
+												<Trash2 className='text-red-500 size-5 mt-1 mr-10 cursor-pointer transition-all hover:scale-120' onClick={() => deleteSentFriendRequest(friendRequest.uniqueUserId)} />
 											</div>
 										)}
 									</div>
 								))
 							)}
 						</div>
+
+						{totalPages != 1 && filteredFriendRequests.length != 0 && (
+							<div className='flex justify-center items-center mt-6 gap-2 flex-wrap'>
+								<ChevronLeft onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))} className={`${currentPage === 1 ? 'opacity-50' : 'cursor-pointer hover:scale-110'} text-black rounded disabled:opacity-50`} />
+								{[...Array(totalPages)].map((_, index) => (
+									<button key={index} onClick={() => handlePageChange(index + 1)} className={`px-3 py-1 rounded-md text-sm transition ${currentPage === index + 1 ? 'bg-indigo-600 text-white' : 'bg-gray-200 hover:bg-gray-300 hover:scale-110 cursor-pointer'}`}>
+										{index + 1}
+									</button>
+								))}
+								<ChevronRight onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))} className={`${currentPage === totalPages ? 'opacity-50' : 'cursor-pointer hover:scale-110'} text-black rounded disabled:opacity-50`} />
+							</div>
+						)}
 					</div>
 				)}
 			</div>
