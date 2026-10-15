@@ -56,7 +56,7 @@ const Tasks = (props) => {
 				warnToast(headers['redis-ratelimit-message'])
 			}
 			if (data.success) {
-				setTasks(data.data.tasks)
+				setTasks(data.data?.tasks ?? [])
 			} else {
 				toast.error(data.message)
 			}
@@ -89,12 +89,12 @@ const Tasks = (props) => {
 				warnToast(headers['redis-ratelimit-message'])
 			}
 			if (data.success) {
-				setEditTask(true)
 				setEditTaskTitle(data.task.title)
 				setEditTaskDescription(data.task.description)
 				setEditTaskTitleCheck(data.task.title)
 				setEditTaskDescriptionCheck(data.task.description)
 				setEditTaskId(taskId)
+				setEditTask(true)
 			} else {
 				toast.error(data.message)
 			}
@@ -119,11 +119,13 @@ const Tasks = (props) => {
 				getTasks()
 				toast.success(data.message)
 				setEditTask(false)
+				setCreateNewTask(false)
 				setEditTaskTitle('')
 				setEditTaskDescription('')
 				setEditTaskTitleCheck('')
 				setEditTaskDescriptionCheck('')
-				setCreateNewTask(false)
+			} else {
+				toast.error(data.message)
 			}
 		} catch (error) {
 			handleErrorStatusCode(error.response?.status, error)
@@ -131,16 +133,14 @@ const Tasks = (props) => {
 	}
 
 	const createTask = async (e) => {
+		e.preventDefault()
 		try {
-			e.preventDefault()
-
 			const { data, headers } = await axios.post(`${backendUrl}/api/task/create-task`, { title: createNewTaskTitle, description: createNewTaskDescription })
 			if (headers['redis-ratelimit-message']) {
 				warnToast(headers['redis-ratelimit-message'])
 			}
 			if (data.success) {
 				getTasks()
-				setCurrentPage()
 				toast.success(data.message)
 				setCreateNewTaskTitle('')
 				setCreateNewTaskDescription('')
@@ -246,9 +246,9 @@ const Tasks = (props) => {
 
 	useEffect(() => {
 		if (currentPage > totalPages) {
-			setCurrentPage(1)
+			setCurrentPage(Math.max(1, totalPages))
 		}
-	}, [tasksPerPage])
+	}, [currentPage, totalPages])
 
 	return authLoading ? (
 		<LoadingAnimation />
@@ -300,7 +300,7 @@ const Tasks = (props) => {
 									<div key={task._id} className={`${selectedFilter !== 'All' ? 'transition-opacity' : ''} p-4 bg-white shadow-md rounded-lg hover:shadow-xl hover:z-10 hover:scale-[1.03] transition-all w-full h-full`}>
 										<h3 className='font-semibold text-lg text-gray-800 border-b pb-2'>{task.title}</h3>
 
-										<p className='text-gray-600 text-sm mt-2 transition-all duration-300 break-all whitespace-normal min-h-[50px]'>{expandedTaskId === task._id ? task.description : task.description.length > 50 ? task.description.substring(0, 100) + '...' : task.description}</p>
+										<p className='text-gray-600 text-sm mt-2 transition-all duration-300 break-all whitespace-normal min-h-[50px]'>{expandedTaskId === task._id ? task.description : task.description.length > 50 ? task.description.substring(0, 50) + '...' : task.description}</p>
 
 										{task.description?.length > 50 && (
 											<div className='flex justify-center items-center mt-3 gap-2'>
@@ -394,9 +394,20 @@ const Tasks = (props) => {
 						{totalPages != 1 && filteredTasks.length != 0 && (
 							<div className='flex justify-center items-center mt-6 gap-2 flex-wrap'>
 								<ChevronLeft onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))} className={`${currentPage === 1 ? 'opacity-50' : 'cursor-pointer hover:scale-110'} text-black rounded disabled:opacity-50`} />
-								{[...Array(totalPages)].map((_, index) => (
-									<button key={index} onClick={() => handlePageChange(index + 1)} className={`px-3 py-1 rounded-md text-sm transition ${currentPage === index + 1 ? 'bg-indigo-600 text-white' : 'bg-gray-200 hover:bg-gray-300 hover:scale-110 cursor-pointer'}`}>
-										{index + 1}
+								{Array.from(
+									{
+										length: Math.min(5, totalPages)
+									},
+									(_, index) => {
+										let startPage = Math.max(1, currentPage - 2)
+										if (startPage + 4 > totalPages) {
+											startPage = Math.max(1, totalPages - 4)
+										}
+										return startPage + index
+									}
+								).map((page) => (
+									<button key={page} onClick={() => handlePageChange(page)} className={`px-3 py-1 rounded-md text-sm transition ${currentPage === page ? 'bg-indigo-600 text-white' : 'bg-gray-200 hover:bg-gray-300 hover:scale-110 cursor-pointer'}`}>
+										{page}
 									</button>
 								))}
 								<ChevronRight onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))} className={`${currentPage === totalPages ? 'opacity-50' : 'cursor-pointer hover:scale-110'} text-black rounded disabled:opacity-50`} />
