@@ -11,7 +11,7 @@ import { warnToast } from '../components/WarnToast'
 
 const FriendsOrUsers = (props) => {
 	const navigate = useNavigate()
-	const { backendUrl, isLoggedIn, userData, getUserData, authLoading, handleErrorStatusCode } = useContext(AppContext)
+	const { backendUrl, isLoggedIn, userData, authLoading, handleErrorStatusCode } = useContext(AppContext)
 
 	const [friendsOrUsers, setFriendsOrUsers] = useState([])
 	const [friendRequests, setFriendRequests] = useState([])
@@ -99,6 +99,23 @@ const FriendsOrUsers = (props) => {
 			if (data.success) {
 				toast.success(data.message)
 				getFriendsOrUsers()
+			} else {
+				toast.error(data.message)
+			}
+		} catch (error) {
+			handleErrorStatusCode(error.response?.status, error)
+		}
+		getFriendsAndFriendRequests()
+	}
+
+	const deleteSentFriendRequest = async (friendUniqueUserId) => {
+		try {
+			const { data, headers } = await axios.patch(`${backendUrl}/api/friend/delete-sent-friend-request/${friendUniqueUserId}`)
+			if (headers['redis-ratelimit-message']) {
+				warnToast(headers['redis-ratelimit-message'])
+			}
+			if (data.success) {
+				toast.success(data.message)
 			} else {
 				toast.error(data.message)
 			}
@@ -201,7 +218,7 @@ const FriendsOrUsers = (props) => {
 					navigate('/')
 				) : (
 					<div className='flex flex-col items-center mt-20 px-4 text-center p-10 w-[70%] sm:w-[80%] text-black text-sm'>
-						<h1 className='text-3xl text-center font-semibold'>{props.type === 'friend' ? 'My friends' : 'Search users'}</h1>
+						<h1 className='text-3xl text-center font-semibold mb-6'>{props.type === 'friend' ? 'My friends' : 'Search users'}</h1>
 
 						{(props.type === 'friend' && friendsOrUsers.length > 0) ||
 							(props.type === 'user' && (
@@ -223,20 +240,20 @@ const FriendsOrUsers = (props) => {
 							)}
 							{props.type === 'user' && searchText.length === 0 ? (
 								<p className='text-lg font-semibold text-black mt-10 col-span-full'>Please type to search other users</p>
-							) : filteredFriendsOrUsers.length === 0 ? (
+							) : filteredFriendsOrUsers.length === 0 && friendsOrUsers.length > 0 ? (
 								<p className='text-lg font-semibold text-black mt-10 col-span-full'>No {props.type === 'friend' ? 'friends' : 'users'} found</p>
 							) : (
 								currentFriendsOrUsersPerPages.map((friendOrUser) => (
 									<div key={friendOrUser.uniqueUserId} className='p-4 bg-white shadow-md rounded-lg hover:shadow-xl hover:z-10 hover:scale-[1.03] transition-all w-full h-full'>
-										<h3 className={`font-semibold text-lg text-gray-800 border-b pb-2 ${friendCheck(friendOrUser.uniqueUserId) && 'cursor-pointer'}`} onClick={() => friendCheck(friendOrUser.uniqueUserId) && navigate(`/my-friends-tasks/${friendOrUser.uniqueUserId}/${friendOrUser.name}`)}>
+										<h3 className={`font-semibold text-[10px] sm:text-lg text-gray-800 border-b pb-2 ${friendCheck(friendOrUser.uniqueUserId) && 'cursor-pointer'}`} onClick={() => friendCheck(friendOrUser.uniqueUserId) && navigate(`/my-friends-tasks/${friendOrUser.uniqueUserId}/${friendOrUser.name}`)}>
 											{friendOrUser.name}
 										</h3>
 
-										<h3 className='font-semibold text-base text-gray-800 border-b pb-2'>{friendOrUser.uniqueUserId}</h3>
+										<h3 className='font-semibold text-[10px] sm:text-lg text-gray-800 border-b pb-2'>{friendOrUser.uniqueUserId}</h3>
 
 										{props.type === 'friend' ? (
 											<>
-												<p className='p-2 border-b'>Since: {convertTime(new Date(friendOrUser.since))}</p>
+												<p className='text-[10px] sm:text-lg p-2 border-b'>Since: {convertTime(new Date(friendOrUser.since))}</p>
 												<div className='flex flex-row items-center justify-center gap-10 mt-2'>
 													<Trash2 className='text-red-500 size-5 cursor-pointer transition-all hover:scale-120' onClick={() => removeFriend(friendOrUser.uniqueUserId)} />
 												</div>
@@ -246,10 +263,13 @@ const FriendsOrUsers = (props) => {
 												{requestCheck(friendOrUser.uniqueUserId, 'received') ? (
 													<>
 														<X className='text-red-500 size-5 mt-1 mr-10 cursor-pointer transition-all hover:scale-120' onClick={() => acceptOrDeleteFriendRequest('reject', friendOrUser.uniqueUserId)} />
-														<Check className='text-green-700 size-5 mt-1 cursor-pointer transition-all hover:scale-120' onClick={() => acceptOrDeleteFriendRequest('accept', friendOrUser.uniqueUserId)} />
+														<Check className='text-green-500 size-5 mt-1 cursor-pointer transition-all hover:scale-120' onClick={() => acceptOrDeleteFriendRequest('accept', friendOrUser.uniqueUserId)} />
 													</>
 												) : requestCheck(friendOrUser.uniqueUserId, 'sent') ? (
-													<Forward className='size-5 mt-1' />
+													<div className='flex flex-row items-center justify-center gap-10'>
+														<Forward className='size-5 mt-1' />
+														<Trash2 className='text-red-500 size-5 mt-1 cursor-pointer transition-all hover:scale-120' onClick={() => deleteSentFriendRequest(friendOrUser.uniqueUserId)} />
+													</div>
 												) : friendCheck(friendOrUser.uniqueUserId) ? (
 													<div className='flex flex-row items-center justify-center gap-10 mt-2'>
 														<Handshake className='size-5' />

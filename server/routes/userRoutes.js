@@ -1,6 +1,6 @@
 import express from 'express'
 
-import { register, login, logout, isAuth, sendVerifyAccountOtp, verifyAccount, getUserData, googleLogin, sendResetPasswordOtp, resetPassword, updateUserProfile, getAllUsersList } from '../controllers/userControllers.js'
+import { cancelOtpRequest, getAllUsersList, getUserData, googleLogin, isAuth, login, logout, register, resetPassword, sendResetPasswordOtp, sendVerifyAccountOtp, updateUserProfile, verifyAccount } from '../controllers/userControllers.js'
 import { userAuth } from '../middlewares/authUser.js'
 
 const userRouter = express.Router()
@@ -22,6 +22,7 @@ userRouter.post('/send-verify-account-otp', sendVerifyAccountOtp)
 userRouter.post('/verify-account', verifyAccount)
 userRouter.post('/send-reset-password-otp', sendResetPasswordOtp)
 userRouter.post('/reset-password', resetPassword)
+userRouter.post('/cancel-otp-request', cancelOtpRequest)
 
 userRouter.patch('/update-my-profile', updateUserProfile)
 

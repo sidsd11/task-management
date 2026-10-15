@@ -1,12 +1,12 @@
 import { useContext, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
+import toast from 'react-hot-toast'
+import { BadgeCheck, Mail, User } from 'lucide-react'
 
 import { AppContext } from '../context/AppContext'
-import toast from 'react-hot-toast'
 import { warnToast } from '../components/WarnToast'
 import Navbar from '../components/Navbar'
-import { BadgeCheck, Mail, User } from 'lucide-react'
 import LoadingAnimation from '../components/LoadingAnimation'
 
 const MyProfile = () => {
@@ -33,7 +33,7 @@ const MyProfile = () => {
 		} catch (error) {
 			handleErrorStatusCode(error.response?.status, error)
 		} finally {
-			getUserData()
+			await getUserData()
 		}
 	}
 
@@ -69,7 +69,7 @@ const MyProfile = () => {
 		} catch (error) {
 			handleErrorStatusCode(error.response?.status, error)
 		}
-		getUserData()
+		await getUserData()
 	}
 
 	useEffect(() => {
@@ -85,12 +85,13 @@ const MyProfile = () => {
 	return authLoading ? (
 		<LoadingAnimation />
 	) : (
-		<div className='flex flex-col items-center justify-center min-h-screen bg-linear-to-br from-blue-200 to-purple-400'>
+		<div className='flex flex-col items-center justify-center min-h-screen min-w-screen bg-linear-to-br from-blue-200 to-purple-400'>
 			<Navbar />
-			<div className='flex flex-col items-center justify-center mt-20 px-4 text-center bg-slate-900 p-10 rounded-lg shadow-lg w-[70%] sm:w-120 text-indigo-300 text-sm'>
-				<h1 className='text-3xl text-center font-semibold text-white'>My Profile</h1>
 
-				<div className='bg-slate-900 p-8 rounded-lg shadow-lg w-120 text-sm'>
+			<div className='flex flex-col items-center justify-center mt-20 px-4 text-center bg-slate-900 p-10 rounded-lg shadow-lg w-[70%] sm:w-100 text-indigo-300 text-sm'>
+				<h1 className='text-3xl text-center font-semibold text-white mb-5'>My Profile</h1>
+
+				<div>
 					<div className={`mb-4 flex items-center gap-3 w-full px-5 py-2 rounded-lg bg-[#333A5C] ${isEditModeOn ? '' : 'cursor-not-allowed'}`}>
 						<User className='bg-transparent' />
 						<input type='text' onChange={(e) => setNewName(e.target.value)} value={isEditModeOn ? newName : userData?.name || ''} className={`w-full bg-transparent outline-none text-white ${isEditModeOn ? 'text-white' : 'cursor-not-allowed text-white/60'}`} placeholder='Enter your name' required disabled={!isEditModeOn} />
@@ -128,7 +129,7 @@ const MyProfile = () => {
 
 							{isEditModeOn && (
 								<button className='w-full py-3 bg-linear-to-r from-indigo-500 to-indigo-900 text-white rounded-full cursor-pointer transition-all hover:scale-110' onClick={() => UpdateProfile(newName, newEmail)}>
-									Update Profile
+									Update
 								</button>
 							)}
 						</div>

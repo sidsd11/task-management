@@ -26,7 +26,7 @@ const Header = () => {
 		} catch (error) {
 			handleErrorStatusCode(error.response?.status, error)
 		}
-		getUserData()
+		await getUserData()
 	}
 
 	return (
@@ -34,7 +34,7 @@ const Header = () => {
 			<img src={assets.header_img} alt='' className='w-36 h-36 rounded-full mb-6' />
 			<h1 className='flex items-center gap-2 text-xl sm:text-3xl font-medium mb-2'>
 				Hello {userData ? userData.name : ''}!
-				<img src={assets.hand_wave} alt='' className='w-8 aspect-square' />
+				<img src={assets.hand_wave} alt='' className='w-0 sm:w-8 aspect-square' />
 			</h1>
 			<h2 className='text-3xl sm:text-5xl font-semibold mb-4'>Welcome</h2>
 			{!userData?.isAccountVerified && isLoggedIn && (

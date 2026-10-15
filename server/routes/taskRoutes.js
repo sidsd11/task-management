@@ -1,7 +1,7 @@
 import express from 'express'
 
 import { userAuth } from '../middlewares/authUser.js'
-import { getSingleTask, createTask, editTask, deleteTask, markTaskAs } from '../controllers/taskControllers.js'
+import { createTask, deleteTask, editTask, getSingleTask, markTaskAs } from '../controllers/taskControllers.js'
 
 const taskRouter = express.Router()
 

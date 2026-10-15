@@ -5,6 +5,7 @@ import { OAuth2Client } from 'google-auth-library'
 import userModel from '../models/userModel.js'
 import transporter from '../config/nodemailer.js'
 import generateUniqueUserId from '../utils/generateUniqueUserId.js'
+import { EMAIL_VERIFICATION_OTP_TEMPLATE, RESET_PASSWORD_OTP_TEMPLATE, WELCOME_EMAIL_TEMPLATE } from '../utils/emailTemplates.js'
 
 export const register = async (req, res) => {
 	try {
@@ -41,6 +42,9 @@ export const register = async (req, res) => {
 				from: process.env.SENDER_EMAIL,
 				to: normalizedEmail,
 				subject: 'Welcome to To-Do-List',
+				html: WELCOME_EMAIL_TEMPLATE({
+					name: name.trim()
+				}),
 				text: `Welcome ${name.trim()} to To-Do-List. Your account has been created successfully.`
 			}
 			await transporter.sendMail(mailOptions)
@@ -48,7 +52,7 @@ export const register = async (req, res) => {
 			console.error('Error while sending welcome email:', emailError)
 		}
 
-		return res.status(201).json({ success: true, message: 'Account registered successfully' })
+		return res.status(201).json({ success: true, message: 'Account created successfully' })
 	} catch (error) {
 		console.error('Error while registering user:', error)
 		return res.status(500).json({ success: false, message: 'Something went wrong' })
@@ -66,6 +70,11 @@ export const login = async (req, res) => {
 		const user = await userModel.findOne({ email: normalizedEmail })
 		if (!user) {
 			return res.status(404).json({ success: false, message: 'Account with this email does not exist. Please register first and then login' })
+		}
+
+		const isGoogleLogin = user.password === null && user.googleId !== null
+		if (isGoogleLogin) {
+			return res.status(400).json({ success: false, message: 'Your account uses Google login only, please proceed with Google login' })
 		}
 
 		const isMatch = await bcrypt.compare(password, user.password)
@@ -127,8 +136,23 @@ export const googleLogin = async (req, res) => {
 					return res.status(500).json({ success: false, message: 'Failed to generate unique uniqueUserId' })
 				}
 
+				try {
+					const mailOptions = {
+						from: process.env.SENDER_EMAIL,
+						to: normalizedEmail,
+						subject: 'Welcome to To-Do-List',
+						html: WELCOME_EMAIL_TEMPLATE({
+							name: name.trim()
+						}),
+						text: `Welcome ${name.trim()} to To-Do-List. Your account has been created successfully.`
+					}
+					await transporter.sendMail(mailOptions)
+				} catch (emailError) {
+					console.error('Error while sending welcome email after creating account with Google:', emailError)
+				}
+
 				user = new userModel({
-					uniqueUserId,
+					uniqueUserId: uniqueUserId.uniqueUserId,
 					name,
 					email: normalizedEmail,
 					password: null,
@@ -149,7 +173,7 @@ export const googleLogin = async (req, res) => {
 			maxAge: 7 * 24 * 60 * 60 * 1000
 		})
 
-		return res.status(200).json({ success: true, message: 'Google login successful' })
+		return res.status(200).json({ success: true, message: 'Logged in successfully using Google' })
 	} catch (error) {
 		console.error('Error while logging in user via Google:', error)
 		return res.status(500).json({ success: false, message: 'Something went wrong' })
@@ -200,15 +224,15 @@ export const sendVerifyAccountOtp = async (req, res) => {
 		const otp = String(Math.floor(100000 + Math.random() * 900000))
 		const hashedOtp = await bcrypt.hash(otp, 10)
 
-		user.verifyAccountOtp = hashedOtp
-		user.verifyAccountOtpExpiresAt = Date.now() + 5 * 60 * 1000
-		await user.save()
-
 		try {
 			const mailOptions = {
 				from: process.env.SENDER_EMAIL,
 				to: user.email,
 				subject: 'OTP to verify your account',
+				html: EMAIL_VERIFICATION_OTP_TEMPLATE({
+					email: user.email,
+					otp: String(otp)
+				}),
 				text: `OTP to verify your account is ${otp}. It will expire in 5 minutes`
 			}
 			await transporter.sendMail(mailOptions)
@@ -216,6 +240,10 @@ export const sendVerifyAccountOtp = async (req, res) => {
 			console.error('Error while sending OTP email:', emailError)
 			return res.status(500).json({ success: false, message: 'Failed to send OTP via email' })
 		}
+
+		user.verifyAccountOtp = hashedOtp
+		user.verifyAccountOtpExpiresAt = Date.now() + 5 * 60 * 1000
+		await user.save()
 
 		return res.status(200).json({ success: true, message: 'An OTP to verify your account has been sent successfully.' })
 	} catch (error) {
@@ -284,6 +312,10 @@ export const sendResetPasswordOtp = async (req, res) => {
 				from: process.env.SENDER_EMAIL,
 				to: user.email,
 				subject: 'OTP to reset your password',
+				html: RESET_PASSWORD_OTP_TEMPLATE({
+					email: user.email,
+					otp: String(otp)
+				}),
 				text: `OTP to reset your password is ${otp}. It will expire in next 5 minutes.`
 			}
 			await transporter.sendMail(mailOptions)
@@ -327,7 +359,8 @@ export const resetPassword = async (req, res) => {
 			return res.status(400).json({ success: false, message: 'Incorrect OTP' })
 		}
 
-		const passwordCheck = await bcrypt.compare(newPassword, user.password)
+		const isGoogleLoginOnly = user.password === null && user.googleId !== null
+		const passwordCheck = isGoogleLoginOnly ? false : await bcrypt.compare(newPassword, user.password)
 		if (passwordCheck) {
 			return res.status(400).json({ success: false, message: 'Old and new password cannot be same' })
 		}
@@ -348,6 +381,43 @@ export const resetPassword = async (req, res) => {
 		return res.status(200).json({ success: true, message: 'Password changed successfully. Please login again' })
 	} catch (error) {
 		console.error('Error while resetting user password:', error)
+		return res.status(500).json({ success: false, message: 'Something went wrong' })
+	}
+}
+
+export const cancelOtpRequest = async (req, res) => {
+	try {
+		const { id } = req.user
+		if (!id) {
+			return res.status(400).json({ success: false, message: 'Missing User details' })
+		}
+
+		const { otpType } = req.body
+		if (!otpType || (otpType !== 'email' && otpType !== 'password')) {
+			return res.status(400).json({ success: false, message: 'Missing or invalid details' })
+		}
+
+		const user = await userModel.findById(id)
+		if (!user) {
+			return res.status(404).json({ success: false, message: 'User does not exist' })
+		}
+
+		if (otpType === 'email' && user.verifyAccountOtp === null && user.verifyAccountOtpExpiresAt === null) {
+			return res.status(400).json({ success: false, message: 'You did not request OTP to verify your account' })
+		}
+		if (otpType === 'password' && user.resetPasswordOtp === null && user.resetPasswordOtpExpiresAt === null) {
+			return res.status(400).json({ success: false, message: 'You did not request OTP to reset your password' })
+		}
+
+		user.verifyAccountOtp = null
+		user.verifyAccountOtpExpiresAt = null
+		user.resetPasswordOtp = null
+		user.resetPasswordOtpExpiresAt = null
+		await user.save()
+
+		return res.status(200).json({ success: true, message: 'OTP requset cancelled successfully' })
+	} catch (error) {
+		console.error(`Error while cancelling ${otpType === 'email' ? 'Email Verification' : 'Reset Password'} OTP details:`, error)
 		return res.status(500).json({ success: false, message: 'Something went wrong' })
 	}
 }
@@ -422,6 +492,9 @@ export const updateUserProfile = async (req, res) => {
 					from: process.env.SENDER_EMAIL,
 					to: normalizedNewEmail,
 					subject: 'Welcome to To-Do-List',
+					html: WELCOME_EMAIL_TEMPLATE({
+						name: newName.trim()
+					}),
 					text: `Welcome ${newName.trim()} to To-Do-List. Your account has been created successfully.`
 				}
 				await transporter.sendMail(mailOptions)

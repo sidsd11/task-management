@@ -11,7 +11,7 @@ import { warnToast } from '../components/WarnToast'
 
 const Tasks = (props) => {
 	const navigate = useNavigate()
-	const { backendUrl, isLoggedIn, userData, getUserData, authLoading, handleErrorStatusCode } = useContext(AppContext)
+	const { backendUrl, isLoggedIn, userData, authLoading, handleErrorStatusCode } = useContext(AppContext)
 
 	const [tasks, setTasks] = useState([])
 
@@ -21,9 +21,9 @@ const Tasks = (props) => {
 	const [expandedTaskId, setExpandedTaskId] = useState(null)
 
 	const [editTask, setEditTask] = useState(false)
-	const [EditTaskTitle, setEditTaskTitle] = useState('')
+	const [editTaskTitle, setEditTaskTitle] = useState('')
 	const [editTaskDescription, setEditTaskDescription] = useState('')
-	const [EditTaskTitleCheck, setEditTaskTitleCheck] = useState('')
+	const [editTaskTitleCheck, setEditTaskTitleCheck] = useState('')
 	const [editTaskDescriptionCheck, setEditTaskDescriptionCheck] = useState('')
 	const [editTaskId, setEditTaskId] = useState('')
 
@@ -106,12 +106,12 @@ const Tasks = (props) => {
 	const editSelectedTask = async (e) => {
 		e.preventDefault()
 		try {
-			if (EditTaskTitleCheck === EditTaskTitle && editTaskDescriptionCheck === editTaskDescription) {
+			if (editTaskTitleCheck === editTaskTitle && editTaskDescriptionCheck === editTaskDescription) {
 				toast.error('Title and description are same as before.')
 				return
 			}
 
-			const { data, headers } = await axios.patch(`${backendUrl}/api/task/edit-task/${editTaskId}`, { newTitle: EditTaskTitle, newDescription: editTaskDescription })
+			const { data, headers } = await axios.patch(`${backendUrl}/api/task/edit-task/${editTaskId}`, { newTitle: editTaskTitle, newDescription: editTaskDescription })
 			if (headers['redis-ratelimit-message']) {
 				warnToast(headers['redis-ratelimit-message'])
 			}
@@ -140,6 +140,7 @@ const Tasks = (props) => {
 			}
 			if (data.success) {
 				getTasks()
+				setCurrentPage()
 				toast.success(data.message)
 				setCreateNewTaskTitle('')
 				setCreateNewTaskDescription('')
@@ -170,7 +171,7 @@ const Tasks = (props) => {
 		}
 	}
 
-	const copyFriendsTask = async (friendUniqueUserId, taskId, i) => {
+	const copyFriendsTask = async (friendUniqueUserId, taskId) => {
 		try {
 			const { data, headers } = await axios.patch(`${backendUrl}/api/friend/copy-friends-task/${friendUniqueUserId}/${taskId}`)
 			if (headers['redis-ratelimit-message']) {
@@ -216,8 +217,11 @@ const Tasks = (props) => {
 			filtered = filtered.filter((task) => task.title.toLowerCase().includes(searchText.toLowerCase()) || task.description.toLowerCase().includes(searchText.toLowerCase()))
 		}
 		setFilteredTasks(filtered)
-		setCurrentPage(1)
 	}, [tasks, selectedFilter, searchText])
+
+	useEffect(() => {
+		setCurrentPage(1)
+	}, [selectedFilter, searchText])
 
 	useEffect(() => {
 		const updateTasksPerPage = () => {
@@ -284,7 +288,7 @@ const Tasks = (props) => {
 						{filteredTasksBeforeSearching.length > 0 && (
 							<div className='flex items-center justify-center mb-3 border border-indigo-600 bg-white rounded-full p-2'>
 								<Search className='size-4 inline-block' />
-								<input type='text' placeholder='Search tasks' value={searchText} onChange={(e) => setSearchText(e.target.value)} className='rounded ml-3 text-sm' />
+								<input type='text' placeholder='Search tasks' value={searchText} onChange={(e) => setSearchText(e.target.value)} className='w-full rounded ml-3 text-sm' />
 							</div>
 						)}
 
@@ -292,7 +296,7 @@ const Tasks = (props) => {
 							{filteredTasks.length === 0 ? (
 								<p className='text-lg font-semibold text-black mt-10 col-span-full'>No tasks found {selectedFilter === 'All' ? '' : 'as ' + selectedFilter}</p>
 							) : (
-								currentTasks.map((task, index) => (
+								currentTasks.map((task) => (
 									<div key={task._id} className={`${selectedFilter !== 'All' ? 'transition-opacity' : ''} p-4 bg-white shadow-md rounded-lg hover:shadow-xl hover:z-10 hover:scale-[1.03] transition-all w-full h-full`}>
 										<h3 className='font-semibold text-lg text-gray-800 border-b pb-2'>{task.title}</h3>
 
@@ -332,7 +336,11 @@ const Tasks = (props) => {
 												</div>
 
 												<div className='flex flex-col justify-center items-center mt-5 gap-2'>
-													{task.createdAt !== null && <p className='text-xs text-gray-500'>Created at: {convertTime(new Date(task.createdAt))}</p>}
+													{task.createdAt !== null && (
+														<p className='text-xs text-gray-500'>
+															{task.remark?.includes('Copied') ? 'Copied' : 'Created'} at: {convertTime(new Date(task.createdAt))}
+														</p>
+													)}
 
 													{task.editedAt !== null && <p className='text-xs text-gray-500'>Edited at: {convertTime(new Date(task.editedAt))}</p>}
 
@@ -372,7 +380,7 @@ const Tasks = (props) => {
 													<ClipboardCopy
 														className='size-5 cursor-pointer transition-all hover:scale-120'
 														onClick={() => {
-															copyFriendsTask(props.uniqueUserId, task._id, index)
+															copyFriendsTask(props.uniqueUserId, task._id)
 														}}
 													/>
 												</p>
@@ -405,14 +413,14 @@ const Tasks = (props) => {
 						setCreateNewTask(false)
 					}}
 				>
-					<div className='flex flex-col items-center mt-20 px-4 text-center bg-slate-900 p-10 rounded-lg shadow-lg w-[70%] sm:w-96 text-indigo-300 text-sm z-100' onClick={(e) => e.stopPropagation()}>
+					<div className='flex flex-col items-center mt-20 px-4 text-center bg-slate-900 p-10 rounded-lg shadow-lg w-[70%] sm:w-100 text-indigo-300 text-sm z-100' onClick={(e) => e.stopPropagation()}>
 						{editTask ? (
 							<>
 								<h1 className='text-3xl text-center font-semibold text-white mb-5'>Edit task</h1>
 
 								<form onSubmit={editSelectedTask}>
 									<div className='mb-4 flex items-center gap-3 w-full px-5 py-2.5 rounded-lg bg-[#333A5C]'>
-										<input type='text' value={EditTaskTitle} onChange={(e) => setEditTaskTitle(e.target.value)} className='bg-transparent outline-none text-white' placeholder='Enter title' maxLength='20' required />
+										<input type='text' value={editTaskTitle} onChange={(e) => setEditTaskTitle(e.target.value)} className='bg-transparent outline-none text-white' placeholder='Enter title' maxLength='20' required />
 									</div>
 
 									<div className='mb-4 w-full px-5 py-2.5 rounded-lg bg-[#333A5C]'>
