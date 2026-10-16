@@ -178,7 +178,7 @@ const FriendRequests = () => {
 						{filteredFriendRequestsBeforeSearching.length > 0 && (
 							<div className='flex items-center justify-center mb-3 border border-indigo-600 bg-white rounded-full p-2'>
 								<Search className='size-4 inline-block' />
-								<input type='text' placeholder='Search users' value={searchText} onChange={(e) => setSearchText(e.target.value)} className='w-full rounded ml-3 text-sm' />
+								<input type='text' placeholder='Search users' value={searchText} onChange={(e) => setSearchText(e.target.value)} className='outline-none w-full rounded ml-3 text-sm' />
 							</div>
 						)}
 

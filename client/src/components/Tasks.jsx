@@ -288,7 +288,7 @@ const Tasks = (props) => {
 						{filteredTasksBeforeSearching.length > 0 && (
 							<div className='flex items-center justify-center mb-3 border border-indigo-600 bg-white rounded-full p-2'>
 								<Search className='size-4 inline-block' />
-								<input type='text' placeholder='Search tasks' value={searchText} onChange={(e) => setSearchText(e.target.value)} className='w-full rounded ml-3 text-sm' />
+								<input type='text' placeholder='Search tasks' value={searchText} onChange={(e) => setSearchText(e.target.value)} className='outline-none w-full rounded ml-3 text-sm' />
 							</div>
 						)}
 
@@ -328,7 +328,7 @@ const Tasks = (props) => {
 															.filter((status) => status != task.status && status != 'All')
 															.map((status) => (
 																<label key={status} className='flex items-center gap-2 cursor-pointer transition-all hover:scale-120'>
-																	<input type='checkbox' name={`status-${task._id}`} onChange={() => markTaskAs(task._id, status)} className='accent-green-600 cursor-pointer' />
+																	<input type='checkbox' name={`status-${task._id}`} onChange={() => markTaskAs(task._id, status)} className='accent-green-600 cursor-pointer outline-none' />
 																	<p className='text-yellow-600 text-xs'>{status}</p>
 																</label>
 															))}

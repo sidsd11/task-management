@@ -174,7 +174,7 @@ const OtpVerification = (props) => {
 						{Array(6)
 							.fill(0)
 							.map((_, index) => (
-								<input type='text' maxLength='1' key={index} required className='w-full h-12 bg-[#333A5C] text-white text-center text-xl rounded-md' ref={(e) => (inputRefs.current[index] = e)} onInput={(e) => handleInput(e, index)} onKeyDown={(e) => handleKeyDown(e, index)} />
+								<input type='text' maxLength='1' key={index} required className='w-full h-12 bg-[#333A5C] text-white outline-none text-center text-xl rounded-md' ref={(e) => (inputRefs.current[index] = e)} onInput={(e) => handleInput(e, index)} onKeyDown={(e) => handleKeyDown(e, index)} />
 							))}
 					</div>
 					{props.type === 'password' && (
