@@ -224,7 +224,7 @@ const FriendsOrUsers = (props) => {
 							(props.type === 'user' && (
 								<div className='flex items-center justify-center mb-3 border border-indigo-600 bg-white rounded-full p-2'>
 									<Search className='size-4 inline-block' />
-									<input type='text' placeholder={props.type === 'friend' ? 'Search friends' : 'Search users'} value={searchText} onChange={(e) => setSearchText(e.target.value)} className='rounded ml-3 text-sm' />
+									<input type='text' placeholder={props.type === 'friend' ? 'Search friends' : 'Search users'} value={searchText} onChange={(e) => setSearchText(e.target.value)} className='rounded ml-3 text-sm outline-none' />
 								</div>
 							))}
 
