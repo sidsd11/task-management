@@ -14,22 +14,9 @@ const app = express()
 app.set('trust proxy', 1)
 
 const port = process.env.PORT || 3000
-const allowedOrigins = ['https://task-management-blue-rho-97.vercel.app']
+const allowedOrigins = ['http://localhost:5173']
 
-app.use(
-	cors({
-		origin: (origin, callback) => {
-			// Allow requests without an Origin header, such as server-to-server requests
-			if (!origin || allowedOrigins.includes(origin)) {
-				return callback(null, true)
-			}
-
-			return callback(new Error('Not allowed by CORS'))
-		},
-		credentials: true,
-		exposedHeaders: ['redis-ratelimit-message']
-	})
-)
+app.use(cors({ origin: allowedOrigins, credentials: true, exposedHeaders: ['redis-ratelimit-message'] }))
 app.use((req, res, next) => {
 	res.set('Cache-Control', 'no-store')
 	next()

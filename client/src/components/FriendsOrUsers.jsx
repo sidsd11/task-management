@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import toast from 'react-hot-toast'
 import { Check, ChevronLeft, ChevronRight, Forward, Handshake, Search, Trash2, UserPlus, X } from 'lucide-react'
@@ -232,9 +232,9 @@ const FriendsOrUsers = (props) => {
 							{props.type === 'friend' && friendsOrUsers.length === 0 && (
 								<p className='text-lg font-semibold text-black mt-10 col-span-full'>
 									You don't have any friends yet.{' '}
-									<span className='inline-block underline cursor-pointer tranisition-transofrm duration-300 hover:scale-110' onClick={() => navigate('/search-users')}>
+									<Link to='/search-users' className='inline-block underline cursor-pointer tranisition-transofrm duration-300 hover:scale-110'>
 										Search
-									</span>{' '}
+									</Link>{' '}
 									for other users to add them as friend.
 								</p>
 							)}
@@ -245,9 +245,7 @@ const FriendsOrUsers = (props) => {
 							) : (
 								currentFriendsOrUsersPerPages.map((friendOrUser) => (
 									<div key={friendOrUser.uniqueUserId} className='p-4 bg-white shadow-md rounded-lg hover:shadow-xl hover:z-10 hover:scale-[1.03] transition-all w-full h-full'>
-										<h3 className={`font-semibold text-[10px] sm:text-lg text-gray-800 border-b pb-2 ${friendCheck(friendOrUser.uniqueUserId) && 'cursor-pointer'}`} onClick={() => friendCheck(friendOrUser.uniqueUserId) && navigate(`/my-friends-tasks/${friendOrUser.uniqueUserId}/${friendOrUser.name}`)}>
-											{friendOrUser.name}
-										</h3>
+										<h3 className={`font-semibold text-[10px] sm:text-lg text-gray-800 border-b pb-2 ${friendCheck(friendOrUser.uniqueUserId) ? 'cursor-pointer hover:scale-110' : ''}`}>{friendCheck(friendOrUser.uniqueUserId) ? <Link to={`/my-friends-tasks/${friendOrUser.uniqueUserId}/${friendOrUser.name}`}>{friendOrUser.name}</Link> : friendOrUser.name}</h3>
 
 										<h3 className='font-semibold text-[10px] sm:text-lg text-gray-800 border-b pb-2'>{friendOrUser.uniqueUserId}</h3>
 
