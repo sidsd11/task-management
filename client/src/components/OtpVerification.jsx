@@ -131,7 +131,7 @@ const OtpVerification = (props) => {
 			return
 		}
 
-		if (props.type === 'emcail' && userData?.isAccountVerified) {
+		if (props.type === 'email' && userData?.isAccountVerified) {
 			navigate('/')
 			return
 		}
@@ -146,14 +146,6 @@ const OtpVerification = (props) => {
 			navigate('/')
 		}
 	}, [authLoading, isLoggedIn, isOtpSentChecking, isOtpSent])
-
-	useEffect(() => {
-		if (newPassword.length > 0) {
-			return
-		} else {
-			setShowPassword(false)
-		}
-	}, [newPassword])
 
 	return authLoading || isOtpSentChecking ? (
 		<LoadingAnimation />
@@ -181,11 +173,24 @@ const OtpVerification = (props) => {
 						<>
 							<div className='mt-4 flex items-center gap-3 w-full px-5 py-2 rounded-lg bg-[#333A5C]'>
 								{showPassword && newPassword.length > 0 ? <LockOpen className='bg-transparent' /> : <Lock className='bg-transparent' />}
-								<input type={showPassword ? 'text' : 'password'} onChange={(e) => setNewPassword(e.target.value)} value={newPassword} className='w-full bg-transparent outline-none text-white' placeholder='Enter your new password' required />
+								<input
+									type={showPassword ? 'text' : 'password'}
+									onChange={(e) => {
+										const value = e.target.value
+										setNewPassword(value)
+										if (value.length === 0) {
+											setShowPassword(false)
+										}
+									}}
+									value={newPassword}
+									className='w-full bg-transparent outline-none text-white'
+									placeholder='Enter your new password'
+									required
+								/>
 							</div>
 
 							<div className='flex justify-start mb-4'>
-								<span className='cursor-pointer text-sm transition-transform hover:scale-110' onClick={() => setShowPassword(newPassword.length === 0 || !showPassword)}>
+								<span className='cursor-pointer text-sm transition-transform hover:scale-110' onClick={() => setShowPassword((prev) => !prev)}>
 									{newPassword.length > 0 ? (showPassword ? 'Hide' : 'Show') + ' Password' : ''}
 								</span>
 							</div>

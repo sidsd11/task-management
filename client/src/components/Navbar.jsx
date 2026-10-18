@@ -1,5 +1,5 @@
 import { useContext } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate, useLocation, Link } from 'react-router-dom'
 import axios from 'axios'
 
 import { assets } from '../assets/assets'
@@ -36,41 +36,43 @@ const Navbar = () => {
 
 	return (
 		<div className='w-full flex justify-between items-center p-4 sm:p-6 sm:px-24 absolute top-0'>
-			<img src={assets.logo} onClick={() => navigate('/')} className='w-20 sm:w-32 cursor-pointer hover:scale-110 transition-all' />
+			<Link to='/'>
+				<img src={assets.logo} className='w-20 sm:w-32 cursor-pointer hover:scale-110 transition-all' />
+			</Link>
 			{userData ? (
 				<div className='w-8 h-8 flex justify-center items-center rounded-full bg-black text-white relative group cursor-pointer'>
 					{userData?.name[0].toUpperCase()}
 					<div className='absolute hidden group-hover:block top-0 right-0 z-10 text-black rounded pt-10'>
 						<ul className='list none m-0 p-2 text-sm rounded-2xl border border-black bg-linear-to-br from-blue-50 to-purple-100'>
 							{currPage !== '/' && currPage !== '/home' && (
-								<li onClick={() => navigate('/')} className='py-2 px-2 whitespace-nowrap rounded-lg transition-all cursor-pointer hover:bg-linear-to-r hover:from-blue-100 hover:to-purple-200 hover:scale-110'>
-									Home
-								</li>
+								<Link to='/'>
+									<li className='py-2 px-2 whitespace-nowrap rounded-lg transition-all cursor-pointer hover:bg-linear-to-r hover:from-blue-100 hover:to-purple-200 hover:scale-110'>Home</li>
+								</Link>
 							)}
 							{currPage !== '/my-profile' && (
-								<li onClick={() => navigate('/my-profile')} className='py-2 px-2 whitespace-nowrap rounded-lg transition-all cursor-pointer hover:bg-linear-to-r hover:from-blue-100 hover:to-purple-200 hover:scale-110'>
-									My Profile
-								</li>
+								<Link to='/my-profile'>
+									<li className='py-2 px-2 whitespace-nowrap rounded-lg transition-all cursor-pointer hover:bg-linear-to-r hover:from-blue-100 hover:to-purple-200 hover:scale-110'>My Profile</li>
+								</Link>
 							)}
 							{userData?.isAccountVerified && currPage !== '/my-tasks' && (
-								<li onClick={() => navigate('/my-tasks')} className='py-2 px-2 whitespace-nowrap rounded-lg transition-all cursor-pointer hover:bg-linear-to-r hover:from-blue-100 hover:to-purple-200 hover:scale-110'>
-									My Tasks
-								</li>
+								<Link to='/my-tasks'>
+									<li className='py-2 px-2 whitespace-nowrap rounded-lg transition-all cursor-pointer hover:bg-linear-to-r hover:from-blue-100 hover:to-purple-200 hover:scale-110'>My Tasks</li>
+								</Link>
 							)}
 							{userData?.isAccountVerified && currPage !== '/my-friends' && (
-								<li onClick={() => navigate('/my-friends')} className='py-2 px-2 whitespace-nowrap rounded-lg transition-all cursor-pointer hover:bg-linear-to-r hover:from-blue-100 hover:to-purple-200 hover:scale-110'>
-									My Friends
-								</li>
+								<Link to='/my-friends'>
+									<li className='py-2 px-2 whitespace-nowrap rounded-lg transition-all cursor-pointer hover:bg-linear-to-r hover:from-blue-100 hover:to-purple-200 hover:scale-110'>My Friends</li>
+								</Link>
 							)}
 							{userData?.isAccountVerified && currPage !== '/friend-requests' && (
-								<li onClick={() => navigate('/friend-requests')} className='py-2 px-2 whitespace-nowrap rounded-lg transition-all cursor-pointer hover:bg-linear-to-r hover:from-blue-100 hover:to-purple-200 hover:scale-110'>
-									Friend Requests
-								</li>
+								<Link to='/friend-requests'>
+									<li className='py-2 px-2 whitespace-nowrap rounded-lg transition-all cursor-pointer hover:bg-linear-to-r hover:from-blue-100 hover:to-purple-200 hover:scale-110'>Friend Requests</li>
+								</Link>
 							)}
 							{userData?.isAccountVerified && currPage !== `/search-users` && (
-								<li onClick={() => navigate('/search-users')} className='py-2 px-2 whitespace-nowrap rounded-lg transition-all cursor-pointer hover:bg-linear-to-r hover:from-blue-100 hover:to-purple-200 hover:scale-110'>
-									Search Users
-								</li>
+								<Link to='/search-users'>
+									<li className='py-2 px-2 whitespace-nowrap rounded-lg transition-all cursor-pointer hover:bg-linear-to-r hover:from-blue-100 hover:to-purple-200 hover:scale-110'>Search Users</li>
+								</Link>
 							)}
 							<li onClick={logout} className='py-2 px-2 whitespace-nowrap rounded-lg transition-all cursor-pointer hover:bg-linear-to-r hover:from-blue-100 hover:to-purple-200 hover:scale-110'>
 								Logout
@@ -79,9 +81,11 @@ const Navbar = () => {
 					</div>
 				</div>
 			) : (
-				<button onClick={() => navigate('/login')} className={`${currPage === '/login' ? 'hidden' : 'flex'} items-center gap-2 border border-gray-500 rounded-full px-6 py-2 text-gray-800 bg-white hover:bg-red-400 hover:scale-110 transition-all cursor-pointer`}>
-					Login <img src={assets.arrow_icon} />
-				</button>
+				<Link to='/login'>
+					<button className={`${currPage === '/login' ? 'hidden' : 'flex'} items-center gap-2 border border-gray-500 rounded-full px-6 py-2 text-gray-800 bg-white hover:bg-red-400 hover:scale-110 transition-all cursor-pointer`}>
+						Login <img src={assets.arrow_icon} />
+					</button>
+				</Link>
 			)}
 		</div>
 	)

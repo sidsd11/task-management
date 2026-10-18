@@ -134,14 +134,6 @@ const Login = () => {
 		}
 	}, [])
 
-	useEffect(() => {
-		if (password.length > 0) {
-			return
-		} else {
-			setShowPassword(false)
-		}
-	}, [password])
-
 	return authLoading ? (
 		<LoadingAnimation />
 	) : (
@@ -166,11 +158,24 @@ const Login = () => {
 
 					<div className='mb-1 flex items-center gap-3 w-full px-5 py-2 rounded-lg bg-[#333A5C]'>
 						{showPassword && password.length > 0 ? <LockOpen className='bg-transparent' /> : <Lock className='bg-transparent' />}
-						<input type={showPassword ? 'text' : 'password'} onChange={(e) => setPassword(e.target.value)} value={password} className='w-full bg-transparent outline-none text-white' placeholder='Enter your password' required />
+						<input
+							type={showPassword ? 'text' : 'password'}
+							onChange={(e) => {
+								const value = e.target.value
+								setPassword(value)
+								if (value.length === 0) {
+									setShowPassword(false)
+								}
+							}}
+							value={password}
+							className='w-full bg-transparent outline-none text-white'
+							placeholder='Enter your password'
+							required
+						/>
 					</div>
 
 					<div className='flex justify-start mb-4'>
-						<span className='cursor-pointer text-sm transition-transform hover:scale-110' onClick={() => setShowPassword(password.length === 0 || !showPassword)}>
+						<span className='cursor-pointer text-sm transition-transform hover:scale-110' onClick={() => setShowPassword((prev) => !prev)}>
 							{password.length > 0 ? (showPassword ? 'Hide' : 'Show') + ' Password' : ''}
 						</span>
 					</div>
